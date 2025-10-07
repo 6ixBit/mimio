@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import {
   ChevronRight,
   Home,
@@ -8,18 +9,48 @@ import {
   FolderKanban,
   Settings,
   Bell,
-  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EnvironmentToggle } from "@/components/environment-toggle";
-import HomePage from "./home/page";
-import VideosPage from "./videos/page";
-import ProjectsPage from "./projects/page";
-import SettingsPage from "./settings/page";
 
-export default function MimioApp() {
-  const [activeSection, setActiveSection] = useState("home");
+interface DashboardLayoutProps {
+  children: React.ReactNode;
+}
+
+export function DashboardLayout({ children }: DashboardLayoutProps) {
+  const router = useRouter();
+  const pathname = usePathname();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Determine active section from pathname
+  const getActiveSection = () => {
+    if (pathname === "/") return "home";
+    if (pathname.startsWith("/videos")) return "videos";
+    if (pathname.startsWith("/projects")) return "projects";
+    if (pathname.startsWith("/settings")) return "settings";
+    if (pathname.startsWith("/create-video")) return "home";
+    if (pathname.startsWith("/create-multiple")) return "home";
+    if (pathname.startsWith("/create-variations")) return "home";
+    return "home";
+  };
+
+  const activeSection = getActiveSection();
+
+  const handleNavigation = (path: string) => {
+    router.push(path);
+  };
+
+  // Get page title from pathname
+  const getPageTitle = () => {
+    if (pathname === "/") return "Home";
+    if (pathname === "/videos") return "Videos";
+    if (pathname === "/projects") return "Projects";
+    if (pathname === "/settings") return "Settings";
+    if (pathname === "/create-video") return "Create Video";
+    if (pathname === "/create-multiple") return "Create Multiple Videos";
+    if (pathname === "/create-variations") return "Create Variations";
+    return "Mimio";
+  };
 
   return (
     <div className="flex h-screen bg-background">
@@ -57,14 +88,14 @@ export default function MimioApp() {
 
           <nav className="space-y-2">
             {[
-              { id: "home", icon: Home, label: "HOME" },
-              { id: "projects", icon: FolderKanban, label: "PROJECTS" },
-              { id: "videos", icon: Video, label: "VIDEOS" },
-              { id: "settings", icon: Settings, label: "SETTINGS" },
+              { id: "home", icon: Home, label: "HOME", path: "/" },
+              { id: "projects", icon: FolderKanban, label: "PROJECTS", path: "/projects" },
+              { id: "videos", icon: Video, label: "VIDEOS", path: "/videos" },
+              { id: "settings", icon: Settings, label: "SETTINGS", path: "/settings" },
             ].map((item) => (
               <button
                 key={item.id}
-                onClick={() => setActiveSection(item.id)}
+                onClick={() => handleNavigation(item.path)}
                 className={`w-full flex items-center gap-3 p-3 rounded transition-colors ${
                   activeSection === item.id
                     ? "bg-primary text-primary-foreground"
@@ -114,7 +145,7 @@ export default function MimioApp() {
           <div className="flex items-center gap-4">
             <div className="text-sm text-muted-foreground">
               <span className="text-primary font-semibold">
-                {activeSection.charAt(0).toUpperCase() + activeSection.slice(1)}
+                {getPageTitle()}
               </span>
             </div>
           </div>
@@ -133,14 +164,12 @@ export default function MimioApp() {
           </div>
         </div>
 
-        {/* Dashboard Content */}
+        {/* Page Content */}
         <div className="flex-1 overflow-auto bg-background">
-          {activeSection === "home" && <HomePage />}
-          {activeSection === "projects" && <ProjectsPage />}
-          {activeSection === "videos" && <VideosPage />}
-          {activeSection === "settings" && <SettingsPage />}
+          {children}
         </div>
       </div>
     </div>
   );
 }
+

@@ -2,6 +2,7 @@
 
 import { LucideIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import Link from "next/link";
 
 interface OptionCardProps {
   icon: LucideIcon;
@@ -18,19 +19,8 @@ export function OptionCard({
   onClick,
   href,
 }: OptionCardProps) {
-  const handleClick = () => {
-    if (onClick) {
-      onClick();
-    } else if (href) {
-      window.location.href = href;
-    }
-  };
-
-  return (
-    <Card
-      className="bg-card border-border hover:border-primary/50 transition-all duration-300 cursor-pointer group hover:shadow-lg"
-      onClick={handleClick}
-    >
+  const cardContent = (
+    <Card className="bg-card border-border hover:border-primary/50 transition-all duration-300 cursor-pointer group hover:shadow-lg h-full">
       <CardContent className="p-6">
         <div className="flex flex-col items-start gap-4">
           <div className="p-3 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
@@ -46,4 +36,10 @@ export function OptionCard({
       </CardContent>
     </Card>
   );
+
+  if (href && !onClick) {
+    return <Link href={href}>{cardContent}</Link>;
+  }
+
+  return <div onClick={onClick}>{cardContent}</div>;
 }
