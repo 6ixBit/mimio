@@ -11,6 +11,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { EnvironmentToggle } from "@/components/environment-toggle";
 import HomePage from "./home/page";
 import VideosPage from "./videos/page";
 import ProjectsPage from "./projects/page";
@@ -118,6 +119,7 @@ export default function MimioApp() {
             </div>
           </div>
           <div className="flex items-center gap-4">
+            <EnvironmentToggle />
             <div className="text-xs text-muted-foreground">
               {new Date().toLocaleDateString()}
             </div>
@@ -127,13 +129,6 @@ export default function MimioApp() {
               className="text-muted-foreground hover:text-primary"
             >
               <Bell className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-muted-foreground hover:text-primary"
-            >
-              <RefreshCw className="w-4 h-4" />
             </Button>
           </div>
         </div>

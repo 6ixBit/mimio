@@ -1,407 +1,252 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   Search,
-  Filter,
-  MoreHorizontal,
-  MapPin,
-  Clock,
-  Shield,
+  Play,
+  Download,
+  Share2,
+  MoreVertical,
+  Calendar,
+  Eye,
+  Video,
 } from "lucide-react";
 
 export default function VideosPage() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedAgent, setSelectedAgent] = useState(null);
 
-  const agents = [
+  // Mock video data
+  const videos = [
     {
-      id: "G-078W",
-      name: "VENGEFUL SPIRIT",
-      status: "active",
-      location: "Berlin",
-      lastSeen: "2 min ago",
-      missions: 47,
-      risk: "high",
+      id: "1",
+      title: "Product Demo - Fitness App",
+      thumbnail:
+        "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&h=225&fit=crop",
+      duration: "0:45",
+      views: 1234,
+      createdAt: "2024-10-06",
+      project: "Fitness App Campaign",
+      status: "published",
     },
     {
-      id: "G-079X",
-      name: "OBSIDIAN SENTINEL",
-      status: "standby",
-      location: "Tokyo",
-      lastSeen: "15 min ago",
-      missions: 32,
-      risk: "medium",
+      id: "2",
+      title: "Summer Collection Showcase",
+      thumbnail:
+        "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=225&fit=crop",
+      duration: "1:20",
+      views: 2891,
+      createdAt: "2024-10-05",
+      project: "E-commerce Products",
+      status: "published",
     },
     {
-      id: "G-080Y",
-      name: "GHOSTLY FURY",
-      status: "active",
-      location: "Cairo",
-      lastSeen: "1 min ago",
-      missions: 63,
-      risk: "high",
+      id: "3",
+      title: "Feature Highlight Video",
+      thumbnail:
+        "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=225&fit=crop",
+      duration: "0:58",
+      views: 567,
+      createdAt: "2024-10-04",
+      project: "SaaS Product Demo",
+      status: "draft",
     },
     {
-      id: "G-081Z",
-      name: "CURSED REVENANT",
-      status: "compromised",
-      location: "Moscow",
-      lastSeen: "3 hours ago",
-      missions: 28,
-      risk: "critical",
+      id: "4",
+      title: "Customer Testimonial",
+      thumbnail:
+        "https://images.unsplash.com/photo-1551434678-e076c223a692?w=400&h=225&fit=crop",
+      duration: "1:15",
+      views: 892,
+      createdAt: "2024-10-03",
+      project: "Fitness App Campaign",
+      status: "published",
     },
     {
-      id: "G-082A",
-      name: "VENOMOUS SHADE",
-      status: "active",
-      location: "London",
-      lastSeen: "5 min ago",
-      missions: 41,
-      risk: "medium",
+      id: "5",
+      title: "Product Unboxing",
+      thumbnail:
+        "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=225&fit=crop",
+      duration: "2:30",
+      views: 3421,
+      createdAt: "2024-10-02",
+      project: "E-commerce Products",
+      status: "published",
     },
     {
-      id: "G-083B",
-      name: "MYSTIC ENIGMA",
-      status: "training",
-      location: "Base Alpha",
-      lastSeen: "1 day ago",
-      missions: 12,
-      risk: "low",
-    },
-    {
-      id: "G-084C",
-      name: "WRAITH AVENGER",
-      status: "active",
-      location: "Paris",
-      lastSeen: "8 min ago",
-      missions: 55,
-      risk: "high",
-    },
-    {
-      id: "G-085D",
-      name: "SPECTRAL FURY",
-      status: "standby",
-      location: "Sydney",
-      lastSeen: "22 min ago",
-      missions: 38,
-      risk: "medium",
+      id: "6",
+      title: "How-to Tutorial",
+      thumbnail:
+        "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400&h=225&fit=crop",
+      duration: "3:45",
+      views: 1567,
+      createdAt: "2024-10-01",
+      project: "SaaS Product Demo",
+      status: "processing",
     },
   ];
 
-  const filteredAgents = agents.filter(
-    (agent) =>
-      agent.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      agent.id.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredVideos = videos.filter((video) =>
+    video.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "published":
+        return "bg-green-500/20 text-green-700";
+      case "draft":
+        return "bg-muted text-muted-foreground";
+      case "processing":
+        return "bg-primary/20 text-primary";
+      default:
+        return "bg-muted text-muted-foreground";
+    }
+  };
 
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground tracking-wider">
-            AGENT NETWORK
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Manage and monitor field operatives
+          <h1 className="text-3xl font-bold text-foreground mb-2">Videos</h1>
+          <p className="text-muted-foreground">
+            Browse and manage all your created videos
           </p>
-        </div>
-        <div className="flex gap-2">
-          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
-            Deploy Agent
-          </Button>
-          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
-            <Filter className="w-4 h-4 mr-2" />
-            Filter
-          </Button>
         </div>
       </div>
 
       {/* Search and Stats */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        <Card className="lg:col-span-1 bg-card border-border">
-          <CardContent className="p-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search agents..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-muted border-border text-foreground placeholder-neutral-400"
-              />
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 relative w-full">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground z-10" />
+          <Input
+            placeholder="Search videos..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 bg-card border-border"
+          />
+        </div>
 
         <Card className="bg-card border-border">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-muted-foreground tracking-wider">
-                  ACTIVE AGENTS
+                  TOTAL VIDEOS
                 </p>
                 <p className="text-2xl font-bold text-foreground font-mono">
-                  847
+                  {videos.length}
                 </p>
               </div>
-              <Shield className="w-8 h-8 text-foreground" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card border-border">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground tracking-wider">
-                  COMPROMISED
-                </p>
-                <p className="text-2xl font-bold text-red-500 font-mono">3</p>
-              </div>
-              <Shield className="w-8 h-8 text-red-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card border-border">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground tracking-wider">
-                  IN TRAINING
-                </p>
-                <p className="text-2xl font-bold text-primary font-mono">23</p>
-              </div>
-              <Shield className="w-8 h-8 text-primary" />
+              <Video className="w-8 h-8 text-primary" />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Agent List */}
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <CardTitle className="text-sm font-medium text-card-foreground tracking-wider">
-            AGENT ROSTER
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-neutral-700">
-                  <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wider">
-                    AGENT ID
-                  </th>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wider">
-                    CODENAME
-                  </th>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wider">
-                    STATUS
-                  </th>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wider">
-                    LOCATION
-                  </th>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wider">
-                    LAST SEEN
-                  </th>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wider">
-                    MISSIONS
-                  </th>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wider">
-                    RISK
-                  </th>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wider">
-                    ACTIONS
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredAgents.map((agent, index) => (
-                  <tr
-                    key={agent.id}
-                    className={`border-b border-neutral-800 hover:bg-muted transition-colors cursor-pointer ${
-                      index % 2 === 0 ? "bg-neutral-900" : "bg-card"
-                    }`}
-                    onClick={() => setSelectedAgent(agent)}
-                  >
-                    <td className="py-3 px-4 text-sm text-foreground font-mono">
-                      {agent.id}
-                    </td>
-                    <td className="py-3 px-4 text-sm text-foreground">
-                      {agent.name}
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2">
-                        <div
-                          className={`w-2 h-2 rounded-full ${
-                            agent.status === "active"
-                              ? "bg-white"
-                              : agent.status === "standby"
-                              ? "bg-muted-foreground"
-                              : agent.status === "training"
-                              ? "bg-orange-500"
-                              : "bg-red-500"
-                          }`}
-                        ></div>
-                        <span className="text-xs text-card-foreground uppercase tracking-wider">
-                          {agent.status}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2">
-                        <MapPin className="w-3 h-3 text-muted-foreground" />
-                        <span className="text-sm text-card-foreground">
-                          {agent.location}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-3 h-3 text-muted-foreground" />
-                        <span className="text-sm text-card-foreground font-mono">
-                          {agent.lastSeen}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 text-sm text-foreground font-mono">
-                      {agent.missions}
-                    </td>
-                    <td className="py-3 px-4">
-                      <span
-                        className={`text-xs px-2 py-1 rounded uppercase tracking-wider ${
-                          agent.risk === "critical"
-                            ? "bg-red-500/20 text-red-500"
-                            : agent.risk === "high"
-                            ? "bg-primary/20 text-primary"
-                            : agent.risk === "medium"
-                            ? "bg-muted-foreground/20 text-card-foreground"
-                            : "bg-white/20 text-foreground"
-                        }`}
-                      >
-                        {agent.risk}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-muted-foreground hover:text-primary"
-                      >
-                        <MoreHorizontal className="w-4 h-4" />
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Agent Detail Modal */}
-      {selectedAgent && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <Card className="bg-card border-border w-full max-w-2xl">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="text-lg font-bold text-foreground tracking-wider">
-                  {selectedAgent.name}
-                </CardTitle>
-                <p className="text-sm text-muted-foreground font-mono">
-                  {selectedAgent.id}
-                </p>
-              </div>
-              <Button
-                variant="ghost"
-                onClick={() => setSelectedAgent(null)}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                ✕
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-xs text-muted-foreground tracking-wider mb-1">
-                    STATUS
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={`w-2 h-2 rounded-full ${
-                        selectedAgent.status === "active"
-                          ? "bg-white"
-                          : selectedAgent.status === "standby"
-                          ? "bg-muted-foreground"
-                          : selectedAgent.status === "training"
-                          ? "bg-orange-500"
-                          : "bg-red-500"
-                      }`}
-                    ></div>
-                    <span className="text-sm text-foreground uppercase tracking-wider">
-                      {selectedAgent.status}
-                    </span>
+      {/* Videos Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {filteredVideos.map((video) => (
+          <Card
+            key={video.id}
+            className="bg-card border-border hover:border-primary/50 transition-all duration-300 cursor-pointer group overflow-hidden"
+          >
+            <CardContent className="p-0">
+              {/* Thumbnail */}
+              <div className="relative aspect-video bg-muted overflow-hidden">
+                <img
+                  src={video.thumbnail}
+                  alt={video.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <div className="w-14 h-14 rounded-full bg-primary/90 flex items-center justify-center">
+                    <Play className="w-6 h-6 text-white ml-1" fill="white" />
                   </div>
                 </div>
-                <div>
-                  <p className="text-xs text-muted-foreground tracking-wider mb-1">
-                    LOCATION
-                  </p>
-                  <p className="text-sm text-foreground">
-                    {selectedAgent.location}
-                  </p>
+                <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                  {video.duration}
                 </div>
-                <div>
-                  <p className="text-xs text-muted-foreground tracking-wider mb-1">
-                    MISSIONS COMPLETED
-                  </p>
-                  <p className="text-sm text-foreground font-mono">
-                    {selectedAgent.missions}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground tracking-wider mb-1">
-                    RISK LEVEL
-                  </p>
-                  <span
-                    className={`text-xs px-2 py-1 rounded uppercase tracking-wider ${
-                      selectedAgent.risk === "critical"
-                        ? "bg-red-500/20 text-red-500"
-                        : selectedAgent.risk === "high"
-                        ? "bg-primary/20 text-primary"
-                        : selectedAgent.risk === "medium"
-                        ? "bg-muted-foreground/20 text-card-foreground"
-                        : "bg-white/20 text-foreground"
-                    }`}
-                  >
-                    {selectedAgent.risk}
-                  </span>
-                </div>
+                <Badge
+                  className={`absolute top-2 left-2 ${getStatusColor(
+                    video.status
+                  )}`}
+                >
+                  {video.status.toUpperCase()}
+                </Badge>
               </div>
-              <div className="flex gap-2 pt-4">
-                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                  Assign Mission
-                </Button>
-                <Button
-                  variant="outline"
-                  className="border-border text-muted-foreground hover:bg-muted hover:text-foreground bg-transparent"
-                >
-                  View History
-                </Button>
-                <Button
-                  variant="outline"
-                  className="border-border text-muted-foreground hover:bg-muted hover:text-foreground bg-transparent"
-                >
-                  Send Message
-                </Button>
+
+              {/* Content */}
+              <div className="p-4 space-y-3">
+                <div>
+                  <h3 className="font-semibold text-foreground line-clamp-2 mb-1">
+                    {video.title}
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    {video.project}
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <Eye className="w-3 h-3" />
+                    <span>{video.views.toLocaleString()} views</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Calendar className="w-3 h-3" />
+                    <span>{video.createdAt}</span>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="flex-1 border-border text-xs"
+                  >
+                    <Download className="w-3 h-3 mr-1" />
+                    Download
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="flex-1 border-border text-xs"
+                  >
+                    <Share2 className="w-3 h-3 mr-1" />
+                    Share
+                  </Button>
+                  <Button size="sm" variant="ghost" className="px-2">
+                    <MoreVertical className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
+        ))}
+      </div>
+
+      {/* Empty State */}
+      {filteredVideos.length === 0 && (
+        <div className="text-center py-12">
+          <Video className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">
+            No videos found
+          </h3>
+          <p className="text-muted-foreground mb-4">
+            {searchTerm
+              ? "Try adjusting your search"
+              : "Create your first video to get started"}
+          </p>
+          {!searchTerm && (
+            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
+              <Play className="w-4 h-4 mr-2" />
+              Create Video
+            </Button>
+          )}
         </div>
       )}
     </div>
