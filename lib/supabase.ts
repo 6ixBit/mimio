@@ -127,6 +127,20 @@ export const templatesApi = {
       .order("created_at", { ascending: false })
       .limit(limit);
   },
+
+  // Create a new template
+  create: async (data: {
+    title: string;
+    video_type: string;
+    video_prompt: string;
+    original_video_url: string;
+    model: string;
+    size: string;
+    duration_seconds: number;
+    thumbnail_url?: string;
+  }) => {
+    return await supabase.from("ad_templates").insert([data]).select().single();
+  },
 };
 
 /**
@@ -173,6 +187,7 @@ export const videosApi = {
       template_id?: string;
       thumbnail_url?: string;
       duration_seconds?: number;
+      status?: string;
     }
   ) => {
     return await supabase
@@ -188,6 +203,7 @@ export const videosApi = {
         template_id: data.template_id || null,
         thumbnail_url: data.thumbnail_url || null,
         duration_seconds: data.duration_seconds || null,
+        status: data.status || "completed",
       })
       .select()
       .single();
@@ -237,6 +253,139 @@ export const videosApi = {
         .update({ views: video.views + 1 })
         .eq("id", id);
     }
+  },
+};
+
+// =====================================================
+// SOCIAL MEDIA ACCOUNTS API
+// =====================================================
+
+export const socialMediaApi = {
+  // Get all connected accounts for a user
+  getAll: async (userId: string) => {
+    return await supabase
+      .from("social_media_accounts")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+  },
+
+  // Get accounts by platform
+  getByPlatform: async (userId: string, platform: "instagram" | "tiktok") => {
+    return await supabase
+      .from("social_media_accounts")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("platform", platform)
+      .order("created_at", { ascending: false });
+  },
+
+  // Create a new social media account connection
+  create: async (
+    userId: string,
+    data: {
+      platform: "instagram" | "tiktok";
+      platform_user_id: string;
+      username: string;
+      display_name?: string;
+      profile_picture_url?: string;
+      access_token: string;
+      refresh_token?: string;
+      token_expires_at?: string;
+    }
+  ) => {
+    return await supabase
+      .from("social_media_accounts")
+      .insert([{ user_id: userId, ...data }])
+      .select()
+      .single();
+  },
+
+  // Update account status or tokens
+  update: async (
+    accountId: string,
+    data: {
+      access_token?: string;
+      refresh_token?: string;
+      token_expires_at?: string;
+      connection_status?: "connected" | "disconnected" | "expired" | "error";
+      is_active?: boolean;
+      error_message?: string;
+      last_used_at?: string;
+    }
+  ) => {
+    return await supabase
+      .from("social_media_accounts")
+      .update(data)
+      .eq("id", accountId);
+  },
+
+  // Disconnect/delete an account
+  delete: async (accountId: string) => {
+    return await supabase
+      .from("social_media_accounts")
+      .delete()
+      .eq("id", accountId);
+  },
+};
+
+/**
+ * Video Posts API (for tracking posts to social media)
+ */
+export const videoPostsApi = {
+  // Get all posts for a video
+  getByVideo: async (videoId: string) => {
+    return await supabase
+      .from("video_posts")
+      .select("*, social_media_account:social_media_accounts(*)")
+      .eq("video_id", videoId)
+      .order("created_at", { ascending: false });
+  },
+
+  // Get all posts by user
+  getByUser: async (userId: string) => {
+    return await supabase
+      .from("video_posts")
+      .select(
+        "*, video:videos(*), social_media_account:social_media_accounts(*)"
+      )
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+  },
+
+  // Create a new post
+  create: async (
+    userId: string,
+    data: {
+      video_id: string;
+      social_media_account_id: string;
+      platform: "instagram" | "tiktok";
+      caption?: string;
+    }
+  ) => {
+    return await supabase
+      .from("video_posts")
+      .insert([{ user_id: userId, ...data }])
+      .select()
+      .single();
+  },
+
+  // Update post status
+  update: async (
+    postId: string,
+    data: {
+      status?: "pending" | "uploading" | "published" | "failed";
+      platform_post_id?: string;
+      post_url?: string;
+      error_message?: string;
+      posted_at?: string;
+      views_count?: number;
+      likes_count?: number;
+      comments_count?: number;
+      shares_count?: number;
+    }
+  ) => {
+    return await supabase.from("video_posts").update(data).eq("id", postId);
   },
 };
 

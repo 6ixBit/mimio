@@ -6,6 +6,23 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   Sparkles,
   Video,
@@ -16,7 +33,9 @@ import {
   ShoppingBag,
   Zap,
   ExternalLink,
+  Plus,
 } from "lucide-react";
+import { templatesApi } from "@/lib/supabase";
 
 interface VideoTemplate {
   id: string;
@@ -218,6 +237,19 @@ export default function TemplatesPage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  
+  // Add template dialog
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    title: "",
+    video_type: "POV",
+    video_prompt: "",
+    original_video_url: "",
+    model: "sora-2",
+    size: "720x1280",
+    duration_seconds: "8",
+  });
 
   // Filter templates
   const filteredTemplates = templates.filter((template) => {
@@ -242,6 +274,46 @@ export default function TemplatesPage() {
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
+  const handleSubmitTemplate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const { data, error } = await templatesApi.create({
+        title: formData.title,
+        video_type: formData.video_type,
+        video_prompt: formData.video_prompt,
+        original_video_url: formData.original_video_url,
+        model: formData.model,
+        size: formData.size,
+        duration_seconds: parseInt(formData.duration_seconds),
+      });
+
+      if (error) {
+        alert("Error creating template: " + error.message);
+        return;
+      }
+
+      // Reset form and close dialog
+      setFormData({
+        title: "",
+        video_type: "POV",
+        video_prompt: "",
+        original_video_url: "",
+        model: "sora-2",
+        size: "720x1280",
+        duration_seconds: "8",
+      });
+      setIsDialogOpen(false);
+      alert("Template added successfully! Refresh to see it.");
+    } catch (err) {
+      console.error("Error:", err);
+      alert("Failed to add template");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const getCategoryIcon = (category: string) => {
     return <Video className="w-4 h-4" />;
   };
@@ -250,11 +322,186 @@ export default function TemplatesPage() {
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-6 h-6 text-primary" />
-          <h1 className="text-3xl font-bold text-foreground">
-            Viral Ad Templates
-          </h1>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-6 h-6 text-primary" />
+            <h1 className="text-3xl font-bold text-foreground">
+              Viral Ad Templates
+            </h1>
+          </div>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Template
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Add Viral Ad Template</DialogTitle>
+                <DialogDescription>
+                  Add a new template to your library
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleSubmitTemplate} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="title">
+                    Title <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="title"
+                    required
+                    value={formData.title}
+                    onChange={(e) =>
+                      setFormData({ ...formData, title: e.target.value })
+                    }
+                    placeholder="e.g., Product Showcase - Modern Tech"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="video_type">
+                      Type <span className="text-red-500">*</span>
+                    </Label>
+                    <Select
+                      value={formData.video_type}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, video_type: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="POV">POV</SelectItem>
+                        <SelectItem value="Review">Review</SelectItem>
+                        <SelectItem value="Unboxing">Unboxing</SelectItem>
+                        <SelectItem value="Tutorial">Tutorial</SelectItem>
+                        <SelectItem value="Showcase">Showcase</SelectItem>
+                        <SelectItem value="Demo">Demo</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="duration">
+                      Duration <span className="text-red-500">*</span>
+                    </Label>
+                    <Select
+                      value={formData.duration_seconds}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, duration_seconds: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="4">4 seconds</SelectItem>
+                        <SelectItem value="8">8 seconds</SelectItem>
+                        <SelectItem value="12">12 seconds</SelectItem>
+                        <SelectItem value="15">15 seconds</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="prompt">
+                    Video Prompt <span className="text-red-500">*</span>
+                  </Label>
+                  <Textarea
+                    id="prompt"
+                    required
+                    value={formData.video_prompt}
+                    onChange={(e) =>
+                      setFormData({ ...formData, video_prompt: e.target.value })
+                    }
+                    placeholder="Describe the video in detail..."
+                    className="min-h-[100px]"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="original_url">
+                    Original Video URL <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="original_url"
+                    required
+                    type="url"
+                    value={formData.original_video_url}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        original_video_url: e.target.value,
+                      })
+                    }
+                    placeholder="https://www.tiktok.com/@user/video/123"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="model">Model</Label>
+                    <Select
+                      value={formData.model}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, model: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="sora-2">Sora 2</SelectItem>
+                        <SelectItem value="sora-2-pro">Sora 2 Pro</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="size">Resolution</Label>
+                    <Select
+                      value={formData.size}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, size: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="720x1280">720x1280 (Vertical)</SelectItem>
+                        <SelectItem value="1280x720">1280x720 (Horizontal)</SelectItem>
+                        <SelectItem value="1024x1792">1024x1792 (Portrait)</SelectItem>
+                        <SelectItem value="1792x1024">1792x1024 (Landscape)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 pt-4">
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="flex-1 bg-primary hover:bg-primary/90"
+                  >
+                    {isSubmitting ? "Adding..." : "Add Template"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsDialogOpen(false)}
+                    disabled={isSubmitting}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
         <p className="text-muted-foreground">
           Professionally crafted video templates ready to recreate with one

@@ -35,8 +35,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     if (pathname.startsWith("/templates")) return "templates";
     if (pathname.startsWith("/settings")) return "settings";
     if (pathname.startsWith("/create-video")) return "home";
-    if (pathname.startsWith("/create-multiple")) return "home";
-    if (pathname.startsWith("/create-variations")) return "home";
     return "home";
   };
 
@@ -53,9 +51,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     if (pathname === "/projects") return "Projects";
     if (pathname === "/templates") return "Templates";
     if (pathname === "/settings") return "Settings";
-    if (pathname === "/create-video") return "Create Video";
-    if (pathname === "/create-multiple") return "Create Multiple Videos";
-    if (pathname === "/create-variations") return "Create Variations";
+    if (pathname === "/create-video") return "Create Videos";
     return "Mimio";
   };
 
@@ -103,16 +99,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 path: "/templates",
               },
               {
-                id: "projects",
-                icon: FolderKanban,
-                label: "PROJECTS",
-                path: "/projects",
-              },
-              {
                 id: "videos",
                 icon: Video,
                 label: "MY VIDEOS",
                 path: "/videos",
+              },
+              {
+                id: "projects",
+                icon: FolderKanban,
+                label: "PROJECTS",
+                path: "/projects",
               },
               {
                 id: "settings",

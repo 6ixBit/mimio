@@ -16,6 +16,7 @@ import {
   Loader2,
   Trash2,
   X,
+  Sparkles,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { videosApi } from "@/lib/supabase";
@@ -66,7 +67,12 @@ export default function VideosPage() {
 
         if (error) throw error;
 
-        setVideos(data || []);
+        // Filter out failed videos - only show processing or completed
+        const filteredData = (data || []).filter(
+          (video) => video.status !== "failed"
+        );
+
+        setVideos(filteredData);
       } catch (err) {
         console.error("Error fetching videos:", err);
         setError(err instanceof Error ? err.message : "Failed to load videos");
@@ -138,6 +144,17 @@ export default function VideosPage() {
 
   const handleClosePlayer = () => {
     setPlayingVideo(null);
+  };
+
+  const handleRecreate = (video: VideoWithProject) => {
+    // Navigate to create video page with pre-filled params
+    const params = new URLSearchParams({
+      prompt: video.prompt,
+      model: video.model,
+      size: video.size,
+      seconds: video.duration_seconds?.toString() || "8",
+    });
+    router.push(`/create-video?${params.toString()}`);
   };
 
   // Loading state
@@ -215,7 +232,16 @@ export default function VideosPage() {
                 className="relative bg-muted overflow-hidden"
                 style={{ aspectRatio: "9/16" }}
               >
-                {video.video_url ? (
+                {video.status === "processing" ? (
+                  // Processing state - show loader
+                  <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
+                    <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
+                    <p className="text-sm text-muted-foreground">
+                      Generating...
+                    </p>
+                  </div>
+                ) : video.video_url ? (
+                  // Completed - show video thumbnail
                   <video
                     src={video.video_url}
                     className="w-full h-full object-cover"
@@ -234,14 +260,16 @@ export default function VideosPage() {
                     <Video className="w-12 h-12 text-primary/50" />
                   </div>
                 )}
-                <div
-                  className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
-                  onClick={() => handlePlayVideo(video)}
-                >
-                  <div className="w-14 h-14 rounded-full bg-primary/90 flex items-center justify-center">
-                    <Play className="w-6 h-6 text-white ml-1" fill="white" />
+                {video.status === "completed" && video.video_url && (
+                  <div
+                    className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+                    onClick={() => handlePlayVideo(video)}
+                  >
+                    <div className="w-14 h-14 rounded-full bg-primary/90 flex items-center justify-center">
+                      <Play className="w-6 h-6 text-white ml-1" fill="white" />
+                    </div>
                   </div>
-                </div>
+                )}
                 {video.duration_seconds && (
                   <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
                     {video.duration_seconds}s
@@ -281,23 +309,44 @@ export default function VideosPage() {
 
                 {/* Actions */}
                 <div className="flex gap-2 pt-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-1 border-border text-xs"
-                    onClick={() => handleDownload(video.video_url, video.title)}
-                  >
-                    <Download className="w-3 h-3 mr-1" />
-                    Download
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="px-3 hover:bg-red-500/10 hover:text-red-600"
-                    onClick={() => handleDeleteVideo(video.id)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  {video.status === "completed" && video.video_url ? (
+                    <>
+                      <Button
+                        size="sm"
+                        className="flex-1 bg-primary hover:bg-primary/90 text-xs"
+                        onClick={() => handleRecreate(video)}
+                      >
+                        <Sparkles className="w-3 h-3 mr-1" />
+                        Recreate
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="px-3 border-border"
+                        onClick={() =>
+                          handleDownload(video.video_url, video.title)
+                        }
+                        title="Download"
+                      >
+                        <Download className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="px-3 hover:bg-red-500/10 hover:text-red-600"
+                        onClick={() => handleDeleteVideo(video.id)}
+                        title="Delete"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </>
+                  ) : (
+                    <div className="flex-1 text-center py-2">
+                      <p className="text-xs text-muted-foreground">
+                        Video is being generated...
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>

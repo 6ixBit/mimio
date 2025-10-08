@@ -1,6 +1,6 @@
 "use client";
 
-import { Video, Copy, Sparkles } from "lucide-react";
+import { Video, Sparkles, Calendar, FolderOpen } from "lucide-react";
 import { OptionCard } from "@/components/option-card";
 
 export default function HomePage() {
@@ -8,23 +8,30 @@ export default function HomePage() {
     {
       id: "create-video",
       icon: Video,
-      title: "Create a Video",
-      description: "Generate a single video from your content",
+      title: "Create Videos",
+      description: "Generate single videos, variations, or batches with AI",
       href: "/create-video",
     },
     {
-      id: "create-multiple",
-      icon: Copy,
-      title: "Create Multiple Videos",
-      description: "Generate multiple videos at once",
-      href: "/create-multiple",
+      id: "my-videos",
+      icon: FolderOpen,
+      title: "My Videos",
+      description: "View and manage all your generated videos",
+      href: "/videos",
     },
     {
-      id: "create-variations",
+      id: "templates",
       icon: Sparkles,
-      title: "Create Variations",
-      description: "Create different variations of one video",
-      href: "/create-variations",
+      title: "Ad Templates",
+      description: "Browse viral ad templates and recreate them",
+      href: "/templates",
+    },
+    {
+      id: "projects",
+      icon: Calendar,
+      title: "Projects",
+      description: "Organize your videos into projects",
+      href: "/projects",
     },
   ];
 
@@ -36,12 +43,12 @@ export default function HomePage() {
           Welcome to Mimio
         </h1>
         <p className="text-muted-foreground">
-          Choose how you want to create your videos
+          AI-powered video generation for your marketing campaigns
         </p>
       </div>
 
       {/* Options Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {options.map((option) => (
           <OptionCard
             key={option.id}

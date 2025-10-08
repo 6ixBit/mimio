@@ -3,516 +3,267 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Video, Upload, Loader2, CheckCircle, XCircle } from "lucide-react";
-import { getApiUrl, API_ENDPOINTS } from "@/lib/api-config";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Video, Copy } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
-import { videosApi, storageApi } from "@/lib/supabase";
+import { videosApi, storageApi, projectsApi } from "@/lib/supabase";
+import { VideoApiClient } from "@/lib/video-api-client";
+import type { TrackedVideo, VideoStatusResponse } from "@/lib/video-api-types";
 
-type VideoStatus = "idle" | "uploading" | "processing" | "completed" | "error";
-
-interface VideoCreationResult {
-  video_id: string;
-  status: string;
-  message?: string;
-  download_url?: string;
-}
+// Import creation mode components
+import { SingleVideoForm } from "./components/SingleVideoForm";
+import { VariationsForm } from "./components/VariationsForm";
+import { BatchVideoProgress } from "@/components/video-creation/BatchVideoProgress";
 
 export default function CreateVideoPage() {
   const searchParams = useSearchParams();
   const { user } = useAuth();
 
-  // Form state - initialize from URL params if available
-  const [prompt, setPrompt] = useState("");
-  const [model, setModel] = useState("sora-2");
-  const [size, setSize] = useState("720x1280");
-  const [seconds, setSeconds] = useState("8");
-  const [imageReference, setImageReference] = useState<File | null>(null);
-  const [videoTitle, setVideoTitle] = useState("");
+  // Shared state
+  const [projects, setProjects] = useState<Array<{ id: string; name: string }>>(
+    []
+  );
 
-  // Pre-fill form from URL parameters (e.g., from templates)
+  // Get initial tab from URL params
+  const urlMode = searchParams.get("mode") || "single";
+  const initialTab = urlMode === "variations" ? "variations" : "single";
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  // Video tracking state
+  const [trackedVideos, setTrackedVideos] = useState<TrackedVideo[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // Update tab when URL mode changes
   useEffect(() => {
-    const urlPrompt = searchParams.get("prompt");
-    const urlModel = searchParams.get("model");
-    const urlSize = searchParams.get("size");
-    const urlSeconds = searchParams.get("seconds");
-
-    if (urlPrompt) setPrompt(urlPrompt);
-    if (urlModel) setModel(urlModel);
-    if (urlSize) setSize(urlSize);
-    if (urlSeconds) setSeconds(urlSeconds);
+    const urlMode = searchParams.get("mode") || "single";
+    const newTab = urlMode === "variations" ? "variations" : "single";
+    setActiveTab(newTab);
   }, [searchParams]);
 
-  // UI state
-  const [status, setStatus] = useState<VideoStatus>("idle");
-  const [progress, setProgress] = useState(0);
-  const [videoResult, setVideoResult] = useState<VideoCreationResult | null>(
-    null
-  );
-  const [error, setError] = useState<string | null>(null);
-  const [isSavingToDatabase, setIsSavingToDatabase] = useState(false);
+  // Fetch user's projects
+  useEffect(() => {
+    async function fetchProjects() {
+      if (!user) return;
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setImageReference(e.target.files[0]);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setStatus("uploading");
-    setError(null);
-    setProgress(0);
-
-    try {
-      // Prepare form data
-      const formData = new FormData();
-      formData.append("prompt", prompt);
-      formData.append("model", model);
-      formData.append("size", size);
-      formData.append("seconds", seconds);
-      if (imageReference) {
-        formData.append("image_reference", imageReference);
-      }
-
-      // Call API
-      const response = await fetch(getApiUrl(API_ENDPOINTS.CREATE_VIDEO), {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || "Failed to create video");
-      }
-
-      const result: VideoCreationResult = await response.json();
-      setVideoResult(result);
-      setStatus("processing");
-
-      // Start polling for status
-      pollVideoStatus(result.video_id);
-    } catch (err) {
-      setStatus("error");
-      setError(err instanceof Error ? err.message : "An error occurred");
-    }
-  };
-
-  const pollVideoStatus = async (videoId: string) => {
-    const interval = setInterval(async () => {
       try {
-        const response = await fetch(
-          getApiUrl(API_ENDPOINTS.VIDEO_STATUS(videoId))
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch video status");
-        }
-
-        const statusData = await response.json();
-
-        // Update progress using actual API progress value
-        if (statusData.progress !== undefined) {
-          setProgress(statusData.progress);
-        }
-
-        // Check if video is completed (status is "completed" and progress is 100)
-        if (statusData.status === "completed" && statusData.progress === 100) {
-          setStatus("completed");
-          setProgress(100);
-          clearInterval(interval);
-          setVideoResult(statusData);
-
-          // Automatically save to Supabase
-          await saveVideoToSupabase(videoId);
-        } else if (
-          statusData.status === "failed" ||
-          statusData.status === "error"
-        ) {
-          setStatus("error");
-          setError(
-            statusData.message || statusData.error || "Video generation failed"
-          );
-          clearInterval(interval);
-        } else if (statusData.status === "in_progress") {
-          // Keep status as processing while in progress
-          setStatus("processing");
+        const { data, error } = await projectsApi.getAll(user.id);
+        if (!error && data) {
+          setProjects(data);
         }
       } catch (err) {
-        setStatus("error");
-        setError(err instanceof Error ? err.message : "Status check failed");
-        clearInterval(interval);
+        console.error("Error fetching projects:", err);
       }
-    }, 3000); // Poll every 3 seconds
+    }
+
+    fetchProjects();
+  }, [user]);
+
+  // Pre-fill from URL params (e.g., from templates)
+  const urlPrompt = searchParams.get("prompt") || "";
+  const urlModel = searchParams.get("model") || "sora-2";
+  const urlSize = searchParams.get("size") || "720x1280";
+  const urlSeconds = searchParams.get("seconds") || "8";
+
+  /**
+   * Handle video download
+   */
+  const handleDownload = async (videoId: string, title: string) => {
+    try {
+      const videoBlob = await VideoApiClient.downloadVideo(videoId);
+      const url = window.URL.createObjectURL(videoBlob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${title || `video_${videoId}`}.mp4`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Download error:", error);
+      alert("Failed to download video");
+    }
+  };
+
+  /**
+   * Poll for video status updates
+   */
+  const pollVideoStatus = async (video: TrackedVideo) => {
+    const interval = setInterval(async () => {
+      try {
+        const status = await VideoApiClient.getStatus(video.id);
+
+        // Update tracked video
+        setTrackedVideos((prev) =>
+          prev.map((v) =>
+            v.id === video.id
+              ? {
+                  ...v,
+                  progress: status.progress || 0,
+                  status:
+                    status.status === "completed"
+                      ? "completed"
+                      : status.status === "failed"
+                      ? "error"
+                      : "processing",
+                  error: status.error || status.message,
+                }
+              : v
+          )
+        );
+
+        // Check if completed
+        if (status.status === "completed" && status.progress === 100) {
+          clearInterval(interval);
+
+          // Upload to Supabase Storage and update database
+          if (video.dbId) {
+            await saveVideoToSupabase(video.id, video.dbId);
+          }
+        } else if (status.status === "failed" || status.status === "error") {
+          clearInterval(interval);
+
+          // Mark as failed in database
+          if (video.dbId) {
+            await videosApi.update(video.dbId, { status: "failed" });
+          }
+        }
+      } catch (error) {
+        console.error("Polling error:", error);
+        clearInterval(interval);
+
+        // Mark as failed
+        setTrackedVideos((prev) =>
+          prev.map((v) =>
+            v.id === video.id
+              ? { ...v, status: "error", error: "Failed to fetch status" }
+              : v
+          )
+        );
+
+        if (video.dbId) {
+          await videosApi.update(video.dbId, { status: "failed" });
+        }
+      }
+    }, 3000);
 
     // Cleanup after 5 minutes
     setTimeout(() => clearInterval(interval), 300000);
   };
 
-  const saveVideoToSupabase = async (videoId: string) => {
-    if (!user) {
-      console.log("User not logged in, skipping save to database");
-      return;
-    }
+  /**
+   * Save completed video to Supabase
+   */
+  const saveVideoToSupabase = async (videoId: string, dbId: string) => {
+    if (!user) return;
 
     try {
-      setIsSavingToDatabase(true);
-
-      // Download the video from the API
-      const response = await fetch(
-        getApiUrl(API_ENDPOINTS.VIDEO_DOWNLOAD(videoId))
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch video for upload");
-      }
-
-      const videoBlob = await response.blob();
-
-      // Generate a unique filename
-      const timestamp = Date.now();
-      const fileName = `video_${videoId}_${timestamp}.mp4`;
+      // Download video
+      const videoBlob = await VideoApiClient.downloadVideo(videoId);
 
       // Upload to Supabase Storage
+      const timestamp = Date.now();
+      const fileName = `video_${videoId}_${timestamp}.mp4`;
       const { data: uploadData, error: uploadError } =
         await storageApi.uploadVideo(user.id, videoBlob, fileName);
 
       if (uploadError || !uploadData) {
-        throw new Error(
-          uploadError?.message || "Failed to upload video to storage"
-        );
+        throw new Error("Failed to upload video");
       }
 
-      // Save metadata to database
-      const title = videoTitle || `Video - ${new Date().toLocaleDateString()}`;
-      const { error: dbError } = await videosApi.create(user.id, {
-        title: title,
+      // Update database record
+      await videosApi.update(dbId, {
         video_url: uploadData.publicUrl,
-        prompt: prompt,
-        model: model,
-        size: size,
-        duration_seconds: parseInt(seconds),
+        status: "completed",
       });
 
-      if (dbError) {
-        throw new Error(dbError.message || "Failed to save video to database");
-      }
-
-      console.log("Video saved to Supabase successfully!");
-    } catch (err) {
-      console.error("Error saving video to Supabase:", err);
-      // Don't show error to user as download still works
-    } finally {
-      setIsSavingToDatabase(false);
+      console.log("Video saved to Supabase:", dbId);
+    } catch (error) {
+      console.error("Error saving to Supabase:", error);
+      // Mark as failed
+      await videosApi.update(dbId, { status: "failed" });
     }
   };
 
+  /**
+   * Reset all tracked videos
+   */
   const handleReset = () => {
-    setStatus("idle");
-    setProgress(0);
-    setVideoResult(null);
-    setError(null);
-    setPrompt("");
-    setVideoTitle("");
-    setImageReference(null);
-    setIsSavingToDatabase(false);
+    setTrackedVideos([]);
+    setIsProcessing(false);
   };
 
-  const handleDownload = async () => {
-    if (!videoResult?.video_id) return;
+  /**
+   * Handle starting video creation (called from child forms)
+   */
+  const handleStartVideos = (videos: TrackedVideo[]) => {
+    setTrackedVideos(videos);
+    setIsProcessing(true);
 
-    try {
-      const response = await fetch(
-        getApiUrl(API_ENDPOINTS.VIDEO_DOWNLOAD(videoResult.video_id))
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to download video");
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `video_${videoResult.video_id}.mp4`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Download failed");
-    }
+    // Start polling for each video
+    videos.forEach((video) => {
+      pollVideoStatus(video);
+    });
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-4xl mx-auto">
-      {/* Main Form */}
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Video className="w-5 h-5 text-primary" />
-            Video Configuration
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Video Title */}
-            <div className="space-y-2">
-              <Label htmlFor="title">Video Title</Label>
-              <Input
-                id="title"
-                placeholder="Enter a title for your video (optional)"
-                value={videoTitle}
-                onChange={(e) => setVideoTitle(e.target.value)}
-                disabled={status !== "idle"}
-                className="bg-background border-border"
-              />
-              <p className="text-xs text-muted-foreground">
-                If left blank, a default title will be generated
-              </p>
-            </div>
+    <div className="p-6 space-y-6 max-w-6xl mx-auto">
+      <div>
+        <h1 className="text-3xl font-bold text-foreground mb-2">
+          Create Videos
+        </h1>
+        <p className="text-muted-foreground">
+          Generate professional AI videos with Sora
+        </p>
+      </div>
 
-            {/* Prompt */}
-            <div className="space-y-2">
-              <Label htmlFor="prompt">
-                Prompt <span className="text-red-500">*</span>
-              </Label>
-              <Textarea
-                id="prompt"
-                placeholder="Describe the video you want to create..."
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                required
-                disabled={status !== "idle"}
-                className="min-h-[100px] bg-background border-border"
-              />
-              <p className="text-xs text-muted-foreground">
-                Be specific and descriptive for best results
-              </p>
-            </div>
+      {/* Show progress if videos are being tracked */}
+      {trackedVideos.length > 0 ? (
+        <BatchVideoProgress
+          videos={trackedVideos}
+          onDownload={handleDownload}
+          onReset={handleReset}
+        />
+      ) : (
+        /* Creation Forms */
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-6">
+            <TabsTrigger value="single" className="flex items-center gap-2">
+              <Video className="w-4 h-4" />
+              <span>Single Video</span>
+            </TabsTrigger>
+            <TabsTrigger value="variations" className="flex items-center gap-2">
+              <Copy className="w-4 h-4" />
+              <span>Variations</span>
+            </TabsTrigger>
+          </TabsList>
 
-            {/* Model Selection */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="model">Model</Label>
-                <Select
-                  value={model}
-                  onValueChange={setModel}
-                  disabled={status !== "idle"}
-                >
-                  <SelectTrigger className="bg-background border-border">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="sora-2">Sora 2</SelectItem>
-                    <SelectItem value="sora-2-pro">Sora 2 Pro</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+          <TabsContent value="single">
+            <SingleVideoForm
+              user={user}
+              projects={projects}
+              defaultValues={{
+                prompt: urlPrompt,
+                model: urlModel,
+                size: urlSize,
+                seconds: urlSeconds,
+              }}
+              onStart={handleStartVideos}
+            />
+          </TabsContent>
 
-              <div className="space-y-2">
-                <Label htmlFor="duration">Duration</Label>
-                <Select
-                  value={seconds}
-                  onValueChange={setSeconds}
-                  disabled={status !== "idle"}
-                >
-                  <SelectTrigger className="bg-background border-border">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="4">4 seconds</SelectItem>
-                    <SelectItem value="8">8 seconds</SelectItem>
-                    <SelectItem value="12">12 seconds</SelectItem>
-                    <SelectItem value="15">15 seconds</SelectItem>
-                    <SelectItem value="30">30 seconds</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Size/Resolution */}
-            <div className="space-y-2">
-              <Label htmlFor="size">Resolution</Label>
-              <Select
-                value={size}
-                onValueChange={setSize}
-                disabled={status !== "idle"}
-              >
-                <SelectTrigger className="bg-background border-border">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="720x1280">
-                    720x1280 - Vertical (TikTok, Instagram Reels, YouTube
-                    Shorts)
-                  </SelectItem>
-                  <SelectItem value="1280x720">
-                    1280x720 - Horizontal (YouTube, Twitter/X)
-                  </SelectItem>
-                  <SelectItem value="1024x1792">
-                    1024x1792 - Portrait (Instagram Stories, Snapchat)
-                  </SelectItem>
-                  <SelectItem value="1792x1024">
-                    1792x1024 - Landscape (Facebook, LinkedIn)
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                Choose the format that matches your target platform
-              </p>
-            </div>
-
-            {/* Image Reference (Optional) */}
-            <div className="space-y-2">
-              <Label htmlFor="image">Reference Image (Optional)</Label>
-              <div className="flex items-center gap-4">
-                <Input
-                  id="image"
-                  type="file"
-                  accept="image/*,video/*"
-                  onChange={handleFileChange}
-                  disabled={status !== "idle"}
-                  className="bg-background border-border"
-                />
-                {imageReference && (
-                  <Badge variant="outline" className="text-xs">
-                    {imageReference.name}
-                  </Badge>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Upload an image or video to guide the generation
-              </p>
-            </div>
-
-            {/* Submit Button */}
-            <Button
-              type="submit"
-              disabled={!prompt || status !== "idle"}
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-            >
-              {status === "idle" ? (
-                <>
-                  <Video className="w-4 h-4 mr-2" />
-                  Generate Video
-                </>
-              ) : (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Processing...
-                </>
-              )}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-
-      {/* Status Card */}
-      {(status === "uploading" ||
-        status === "processing" ||
-        status === "completed" ||
-        status === "error") && (
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              {status === "completed" && (
-                <CheckCircle className="w-5 h-5 text-green-600" />
-              )}
-              {status === "error" && (
-                <XCircle className="w-5 h-5 text-red-600" />
-              )}
-              {(status === "uploading" || status === "processing") && (
-                <Loader2 className="w-5 h-5 text-primary animate-spin" />
-              )}
-              {status === "completed" && "Video Ready!"}
-              {status === "error" && "Error"}
-              {status === "uploading" && "Uploading..."}
-              {status === "processing" && "Generating Video..."}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {(status === "uploading" || status === "processing") && (
-              <>
-                <Progress value={progress} className="h-2" />
-                <p className="text-sm text-muted-foreground text-center">
-                  {progress}% complete
-                  {progress < 100 && " - This may take a few minutes"}
-                  {progress === 100 && " - Finalizing your video..."}
-                </p>
-              </>
-            )}
-
-            {status === "completed" && videoResult && (
-              <div className="space-y-4">
-                <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
-                  <p className="text-sm text-green-700">
-                    Your video has been generated successfully!
-                    {isSavingToDatabase && " Saving to your library..."}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Video ID: {videoResult.video_id}
-                  </p>
-                  {user && !isSavingToDatabase && (
-                    <p className="text-xs text-green-600 mt-1">
-                      ✓ Saved to your video library
-                    </p>
-                  )}
-                  {!user && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Sign in to save videos to your library
-                    </p>
-                  )}
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    onClick={handleDownload}
-                    className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
-                    disabled={isSavingToDatabase}
-                  >
-                    <Upload className="w-4 h-4 mr-2" />
-                    Download Video
-                  </Button>
-                  <Button
-                    onClick={handleReset}
-                    variant="outline"
-                    className="flex-1 border-border"
-                    disabled={isSavingToDatabase}
-                  >
-                    Create Another
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {status === "error" && error && (
-              <div className="space-y-4">
-                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
-                  <p className="text-sm text-red-700">{error}</p>
-                </div>
-                <Button
-                  onClick={handleReset}
-                  variant="outline"
-                  className="w-full border-border"
-                >
-                  Try Again
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          <TabsContent value="variations">
+            <VariationsForm
+              user={user}
+              projects={projects}
+              defaultValues={{
+                model: urlModel,
+                size: urlSize,
+                seconds: urlSeconds,
+              }}
+              onStart={handleStartVideos}
+            />
+          </TabsContent>
+        </Tabs>
       )}
     </div>
   );
