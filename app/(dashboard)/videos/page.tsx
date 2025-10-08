@@ -118,9 +118,9 @@ export default function VideosPage() {
         </div>
       </div>
 
-      {/* Search and Stats */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 relative w-full">
+      {/* Search */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground z-10" />
           <Input
             placeholder="Search videos..."
@@ -129,22 +129,10 @@ export default function VideosPage() {
             className="w-full pl-10 bg-card border-border"
           />
         </div>
-
-        <Card className="bg-card border-border">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground tracking-wider">
-                  TOTAL VIDEOS
-                </p>
-                <p className="text-2xl font-bold text-foreground font-mono">
-                  {videos.length}
-                </p>
-              </div>
-              <Video className="w-8 h-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
+        <p className="text-sm text-muted-foreground whitespace-nowrap">
+          {filteredVideos.length} video{filteredVideos.length !== 1 ? "s" : ""}{" "}
+          found
+        </p>
       </div>
 
       {/* Videos Grid */}

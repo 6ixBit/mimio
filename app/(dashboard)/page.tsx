@@ -52,19 +52,6 @@ export default function HomePage() {
           />
         ))}
       </div>
-
-      {/* Recent Activity */}
-      <div className="mt-12">
-        <h2 className="text-2xl font-bold text-foreground mb-4">
-          Recent Activity
-        </h2>
-        <div className="bg-card border border-border rounded-lg p-6">
-          <p className="text-muted-foreground text-center py-8">
-            No recent activity yet. Start creating videos to see your history
-            here.
-          </p>
-        </div>
-      </div>
     </div>
   );
 }

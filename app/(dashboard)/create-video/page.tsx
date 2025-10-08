@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,12 +29,27 @@ interface VideoCreationResult {
 }
 
 export default function CreateVideoPage() {
-  // Form state
+  const searchParams = useSearchParams();
+  
+  // Form state - initialize from URL params if available
   const [prompt, setPrompt] = useState("");
   const [model, setModel] = useState("sora-2");
   const [size, setSize] = useState("720x1280");
   const [seconds, setSeconds] = useState("8");
   const [imageReference, setImageReference] = useState<File | null>(null);
+
+  // Pre-fill form from URL parameters (e.g., from templates)
+  useEffect(() => {
+    const urlPrompt = searchParams.get("prompt");
+    const urlModel = searchParams.get("model");
+    const urlSize = searchParams.get("size");
+    const urlSeconds = searchParams.get("seconds");
+
+    if (urlPrompt) setPrompt(urlPrompt);
+    if (urlModel) setModel(urlModel);
+    if (urlSize) setSize(urlSize);
+    if (urlSeconds) setSeconds(urlSeconds);
+  }, [searchParams]);
 
   // UI state
   const [status, setStatus] = useState<VideoStatus>("idle");
@@ -102,10 +118,13 @@ export default function CreateVideoPage() {
 
         const statusData = await response.json();
 
-        // Update progress (mock for now, adjust based on actual API response)
-        setProgress((prev) => Math.min(prev + 10, 90));
+        // Update progress using actual API progress value
+        if (statusData.progress !== undefined) {
+          setProgress(statusData.progress);
+        }
 
-        if (statusData.status === "completed") {
+        // Check if video is completed (status is "completed" and progress is 100)
+        if (statusData.status === "completed" && statusData.progress === 100) {
           setStatus("completed");
           setProgress(100);
           clearInterval(interval);
@@ -115,8 +134,13 @@ export default function CreateVideoPage() {
           statusData.status === "error"
         ) {
           setStatus("error");
-          setError(statusData.message || "Video generation failed");
+          setError(
+            statusData.message || statusData.error || "Video generation failed"
+          );
           clearInterval(interval);
+        } else if (statusData.status === "in_progress") {
+          // Keep status as processing while in progress
+          setStatus("processing");
         }
       } catch (err) {
         setStatus("error");
@@ -228,6 +252,8 @@ export default function CreateVideoPage() {
                     <SelectItem value="4">4 seconds</SelectItem>
                     <SelectItem value="8">8 seconds</SelectItem>
                     <SelectItem value="12">12 seconds</SelectItem>
+                    <SelectItem value="15">15 seconds</SelectItem>
+                    <SelectItem value="30">30 seconds</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -338,7 +364,9 @@ export default function CreateVideoPage() {
               <>
                 <Progress value={progress} className="h-2" />
                 <p className="text-sm text-muted-foreground text-center">
-                  {progress}% complete - This may take a few minutes
+                  {progress}% complete
+                  {progress < 100 && " - This may take a few minutes"}
+                  {progress === 100 && " - Finalizing your video..."}
                 </p>
               </>
             )}
