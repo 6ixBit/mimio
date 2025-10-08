@@ -239,3 +239,62 @@ export const videosApi = {
     }
   },
 };
+
+// =====================================================
+// STORAGE API
+// =====================================================
+
+export const storageApi = {
+  // Upload video to storage
+  uploadVideo: async (
+    userId: string,
+    videoBlob: Blob,
+    fileName: string
+  ): Promise<{
+    data: { path: string; publicUrl: string } | null;
+    error: any;
+  }> => {
+    try {
+      // Create path: userId/fileName
+      const filePath = `${userId}/${fileName}`;
+
+      // Upload to storage bucket
+      const { data, error } = await supabase.storage
+        .from("videos")
+        .upload(filePath, videoBlob, {
+          contentType: "video/mp4",
+          upsert: false,
+        });
+
+      if (error) {
+        return { data: null, error };
+      }
+
+      // Get public URL
+      const { data: publicUrlData } = supabase.storage
+        .from("videos")
+        .getPublicUrl(filePath);
+
+      return {
+        data: {
+          path: filePath,
+          publicUrl: publicUrlData.publicUrl,
+        },
+        error: null,
+      };
+    } catch (error) {
+      return { data: null, error };
+    }
+  },
+
+  // Delete video from storage
+  deleteVideo: async (filePath: string) => {
+    return await supabase.storage.from("videos").remove([filePath]);
+  },
+
+  // Get video URL
+  getVideoUrl: (filePath: string) => {
+    const { data } = supabase.storage.from("videos").getPublicUrl(filePath);
+    return data.publicUrl;
+  },
+};

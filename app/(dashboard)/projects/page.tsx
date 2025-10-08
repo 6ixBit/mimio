@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +14,24 @@ import {
   Calendar,
   Video,
   Loader2,
+  Trash2,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/lib/auth-context";
 import { projectsApi } from "@/lib/supabase";
 import { Project } from "@/lib/database.types";
@@ -21,11 +39,13 @@ import { CreateProjectModal } from "@/components/create-project-modal";
 
 export default function ProjectsPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null);
 
   // Fetch projects from database
   useEffect(() => {
@@ -58,6 +78,28 @@ export default function ProjectsPage() {
   // Handle new project created
   const handleProjectCreated = (newProject: Project) => {
     setProjects((prev) => [newProject, ...prev]);
+  };
+
+  // Handle delete project
+  const handleDeleteProject = async () => {
+    if (!deleteProjectId) return;
+
+    try {
+      const { error } = await projectsApi.delete(deleteProjectId);
+      if (error) throw error;
+
+      // Remove from local state
+      setProjects((prev) => prev.filter((p) => p.id !== deleteProjectId));
+      setDeleteProjectId(null);
+    } catch (err) {
+      console.error("Error deleting project:", err);
+      setError(err instanceof Error ? err.message : "Failed to delete project");
+    }
+  };
+
+  // Navigate to project detail page
+  const handleOpenProject = (projectId: string) => {
+    router.push(`/projects/${projectId}`);
   };
 
   const filteredProjects = projects.filter((project) =>
@@ -199,13 +241,26 @@ export default function ProjectsPage() {
                     )}
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-muted-foreground hover:text-foreground flex-shrink-0"
-                >
-                  <MoreVertical className="w-4 h-4" />
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-muted-foreground hover:text-foreground flex-shrink-0"
+                    >
+                      <MoreVertical className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-card border-border">
+                    <DropdownMenuItem
+                      onClick={() => setDeleteProjectId(project.id)}
+                      className="text-red-600 focus:text-red-600 focus:bg-red-500/10 cursor-pointer"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete Project
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </CardHeader>
             <CardContent className="space-y-4 flex-1 flex flex-col">
@@ -229,16 +284,10 @@ export default function ProjectsPage() {
               <div className="pt-2 flex gap-2">
                 <Button
                   size="sm"
+                  onClick={() => handleOpenProject(project.id)}
                   className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
                   Open
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="flex-1 border-border"
-                >
-                  Edit
                 </Button>
               </div>
             </CardContent>
@@ -276,6 +325,36 @@ export default function ProjectsPage() {
         onOpenChange={setIsCreateModalOpen}
         onProjectCreated={handleProjectCreated}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog
+        open={!!deleteProjectId}
+        onOpenChange={() => setDeleteProjectId(null)}
+      >
+        <AlertDialogContent className="bg-card border-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-foreground">
+              Delete Project
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
+              Are you sure you want to delete this project? This action cannot be
+              undone. All videos in this project will remain but will no longer
+              be associated with it.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-border">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteProject}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

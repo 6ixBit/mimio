@@ -1,510 +1,290 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
 import {
-  Server,
-  Database,
-  Shield,
-  Wifi,
-  HardDrive,
-  Cpu,
-  Activity,
-  AlertTriangle,
+  Crown,
+  Sparkles,
+  Instagram,
+  Link as LinkIcon,
   CheckCircle,
-  Settings,
+  XCircle,
 } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
+
+// Mock subscription type - will be replaced with real data later
+const MOCK_SUBSCRIPTION = "Free"; // "Free" or "Pro"
 
 export default function SettingsPage() {
-  const [selectedSystem, setSelectedSystem] = useState(null);
+  const { user } = useAuth();
+  const [subscriptionType, setSubscriptionType] = useState<"Free" | "Pro">(
+    MOCK_SUBSCRIPTION
+  );
 
-  const systems = [
-    {
-      id: "SYS-001",
-      name: "COMMAND SERVER ALPHA",
-      type: "Primary Server",
-      status: "online",
-      health: 98,
-      cpu: 45,
-      memory: 67,
-      storage: 34,
-      uptime: "247 days",
-      location: "Data Center 1",
-      lastMaintenance: "2025-05-15",
-    },
-    {
-      id: "SYS-002",
-      name: "DATABASE CLUSTER BETA",
-      type: "Database",
-      status: "online",
-      health: 95,
-      cpu: 72,
-      memory: 84,
-      storage: 78,
-      uptime: "189 days",
-      location: "Data Center 2",
-      lastMaintenance: "2025-06-01",
-    },
-    {
-      id: "SYS-003",
-      name: "SECURITY GATEWAY",
-      type: "Firewall",
-      status: "warning",
-      health: 87,
-      cpu: 23,
-      memory: 45,
-      storage: 12,
-      uptime: "156 days",
-      location: "DMZ",
-      lastMaintenance: "2025-04-20",
-    },
-    {
-      id: "SYS-004",
-      name: "COMMUNICATION HUB",
-      type: "Network",
-      status: "online",
-      health: 92,
-      cpu: 38,
-      memory: 52,
-      storage: 23,
-      uptime: "203 days",
-      location: "Network Core",
-      lastMaintenance: "2025-05-28",
-    },
-    {
-      id: "SYS-005",
-      name: "BACKUP STORAGE ARRAY",
-      type: "Storage",
-      status: "maintenance",
-      health: 76,
-      cpu: 15,
-      memory: 28,
-      storage: 89,
-      uptime: "0 days",
-      location: "Backup Facility",
-      lastMaintenance: "2025-06-17",
-    },
-    {
-      id: "SYS-006",
-      name: "ANALYTICS ENGINE",
-      type: "Processing",
-      status: "online",
-      health: 94,
-      cpu: 89,
-      memory: 76,
-      storage: 45,
-      uptime: "134 days",
-      location: "Data Center 1",
-      lastMaintenance: "2025-05-10",
-    },
-  ];
+  // Mock connection status - will be replaced with real data later
+  const [tiktokConnected, setTiktokConnected] = useState(false);
+  const [instagramConnected, setInstagramConnected] = useState(false);
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "online":
-        return "bg-white/20 text-foreground";
-      case "warning":
-        return "bg-primary/20 text-primary";
-      case "maintenance":
-        return "bg-muted text-muted-foreground";
-      case "offline":
-        return "bg-red-500/20 text-red-500";
-      default:
-        return "bg-muted text-muted-foreground";
-    }
+  const handleConnectTikTok = () => {
+    // TODO: Implement TikTok OAuth flow
+    console.log("Connect TikTok");
   };
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case "online":
-        return <CheckCircle className="w-4 h-4" />;
-      case "warning":
-        return <AlertTriangle className="w-4 h-4" />;
-      case "maintenance":
-        return <Settings className="w-4 h-4" />;
-      case "offline":
-        return <AlertTriangle className="w-4 h-4" />;
-      default:
-        return <Activity className="w-4 h-4" />;
-    }
+  const handleDisconnectTikTok = () => {
+    setTiktokConnected(false);
   };
 
-  const getSystemIcon = (type) => {
-    switch (type) {
-      case "Primary Server":
-        return <Server className="w-6 h-6" />;
-      case "Database":
-        return <Database className="w-6 h-6" />;
-      case "Firewall":
-        return <Shield className="w-6 h-6" />;
-      case "Network":
-        return <Wifi className="w-6 h-6" />;
-      case "Storage":
-        return <HardDrive className="w-6 h-6" />;
-      case "Processing":
-        return <Cpu className="w-6 h-6" />;
-      default:
-        return <Server className="w-6 h-6" />;
-    }
+  const handleConnectInstagram = () => {
+    // TODO: Implement Instagram OAuth flow
+    console.log("Connect Instagram");
   };
 
-  const getHealthColor = (health) => {
-    if (health >= 95) return "text-foreground";
-    if (health >= 85) return "text-foreground";
-    if (health >= 70) return "text-primary";
-    return "text-red-500";
+  const handleDisconnectInstagram = () => {
+    setInstagramConnected(false);
+  };
+
+  const handleUpgrade = () => {
+    // TODO: Implement upgrade flow (Stripe/payment)
+    console.log("Upgrade to Pro");
+  };
+
+  const handleCancelSubscription = () => {
+    // TODO: Implement cancel subscription flow
+    console.log("Cancel subscription");
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 max-w-4xl">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground tracking-wider">
-            SYSTEMS MONITOR
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Infrastructure health and performance monitoring
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
-            System Scan
-          </Button>
-          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
-            Maintenance Mode
-          </Button>
-        </div>
+      <div>
+        <h1 className="text-3xl font-bold text-foreground mb-2">Settings</h1>
+        <p className="text-muted-foreground">
+          Manage your account settings and preferences
+        </p>
       </div>
 
-      {/* System Overview Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-card border-border">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground tracking-wider">
-                  SYSTEMS ONLINE
-                </p>
-                <p className="text-2xl font-bold text-foreground font-mono">
-                  24/26
-                </p>
-              </div>
-              <CheckCircle className="w-8 h-8 text-foreground" />
+      {/* Subscription Section */}
+      <Card className="bg-card border-border">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-foreground flex items-center gap-2">
+                {subscriptionType === "Pro" && (
+                  <Crown className="w-5 h-5 text-primary" />
+                )}
+                Subscription
+              </CardTitle>
+              <CardDescription>Manage your subscription plan</CardDescription>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card border-border">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground tracking-wider">
-                  WARNINGS
+            <Badge
+              className={
+                subscriptionType === "Pro"
+                  ? "bg-primary/20 text-primary text-base px-4 py-1"
+                  : "bg-muted text-muted-foreground text-base px-4 py-1"
+              }
+            >
+              {subscriptionType === "Pro" && (
+                <Sparkles className="w-4 h-4 mr-1" />
+              )}
+              {subscriptionType}
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {subscriptionType === "Free" ? (
+            <>
+              <div className="p-4 bg-muted/50 rounded-lg space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  You're currently on the Free plan. Upgrade to Pro to unlock:
                 </p>
-                <p className="text-2xl font-bold text-primary font-mono">3</p>
+                <ul className="space-y-2 text-sm text-foreground">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-primary" />
+                    Unlimited video generations
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-primary" />
+                    Access to all video models (Sora 2 Pro)
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-primary" />
+                    Priority processing queue
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-primary" />
+                    Remove watermarks
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-primary" />
+                    Advanced analytics
+                  </li>
+                </ul>
               </div>
-              <AlertTriangle className="w-8 h-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card border-border">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground tracking-wider">
-                  AVG UPTIME
-                </p>
-                <p className="text-2xl font-bold text-foreground font-mono">
-                  99.7%
-                </p>
-              </div>
-              <Activity className="w-8 h-8 text-foreground" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card border-border">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground tracking-wider">
-                  MAINTENANCE
-                </p>
-                <p className="text-2xl font-bold text-card-foreground font-mono">
-                  1
-                </p>
-              </div>
-              <Settings className="w-8 h-8 text-card-foreground" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Systems Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {systems.map((system) => (
-          <Card
-            key={system.id}
-            className="bg-card border-border hover:border-orange-500/50 transition-colors cursor-pointer"
-            onClick={() => setSelectedSystem(system)}
-          >
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  {getSystemIcon(system.type)}
-                  <div>
-                    <CardTitle className="text-sm font-bold text-foreground tracking-wider">
-                      {system.name}
-                    </CardTitle>
+              <Button
+                className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto"
+                onClick={handleUpgrade}
+              >
+                <Crown className="w-4 h-4 mr-2" />
+                Upgrade to Pro
+              </Button>
+            </>
+          ) : (
+            <>
+              <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
+                <div className="flex items-start gap-3">
+                  <Crown className="w-5 h-5 text-primary mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-foreground">
+                      Pro Plan Active
+                    </p>
                     <p className="text-xs text-muted-foreground">
-                      {system.type}
+                      You have access to all premium features
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  {getStatusIcon(system.status)}
-                  <Badge className={getStatusColor(system.status)}>
-                    {system.status.toUpperCase()}
-                  </Badge>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">
-                  SYSTEM HEALTH
-                </span>
-                <span
-                  className={`text-sm font-bold font-mono ${getHealthColor(
-                    system.health
-                  )}`}
-                >
-                  {system.health}%
-                </span>
-              </div>
-              <Progress value={system.health} className="h-2" />
-
-              <div className="grid grid-cols-3 gap-4 text-xs">
-                <div>
-                  <div className="text-muted-foreground mb-1">CPU</div>
-                  <div className="text-foreground font-mono">{system.cpu}%</div>
-                  <div className="w-full bg-muted rounded-full h-1 mt-1">
-                    <div
-                      className="bg-primary h-1 rounded-full transition-all duration-300"
-                      style={{ width: `${system.cpu}%` }}
-                    ></div>
-                  </div>
-                </div>
-                <div>
-                  <div className="text-muted-foreground mb-1">MEMORY</div>
-                  <div className="text-foreground font-mono">
-                    {system.memory}%
-                  </div>
-                  <div className="w-full bg-muted rounded-full h-1 mt-1">
-                    <div
-                      className="bg-primary h-1 rounded-full transition-all duration-300"
-                      style={{ width: `${system.memory}%` }}
-                    ></div>
-                  </div>
-                </div>
-                <div>
-                  <div className="text-muted-foreground mb-1">STORAGE</div>
-                  <div className="text-foreground font-mono">
-                    {system.storage}%
-                  </div>
-                  <div className="w-full bg-muted rounded-full h-1 mt-1">
-                    <div
-                      className="bg-primary h-1 rounded-full transition-all duration-300"
-                      style={{ width: `${system.storage}%` }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-1 text-xs text-muted-foreground">
-                <div className="flex justify-between">
-                  <span>Uptime:</span>
-                  <span className="text-foreground font-mono">
-                    {system.uptime}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Location:</span>
-                  <span className="text-foreground">{system.location}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* System Detail Modal */}
-      {selectedSystem && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <Card className="bg-card border-border w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div className="flex items-center gap-3">
-                {getSystemIcon(selectedSystem.type)}
-                <div>
-                  <CardTitle className="text-xl font-bold text-foreground tracking-wider">
-                    {selectedSystem.name}
-                  </CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedSystem.id} • {selectedSystem.type}
-                  </p>
-                </div>
               </div>
               <Button
-                variant="ghost"
-                onClick={() => setSelectedSystem(null)}
-                className="text-muted-foreground hover:text-foreground"
+                variant="outline"
+                className="border-border text-muted-foreground hover:bg-muted hover:text-foreground w-full sm:w-auto"
+                onClick={handleCancelSubscription}
               >
-                ✕
+                Cancel Subscription
               </Button>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-sm font-medium text-card-foreground tracking-wider mb-2">
-                      SYSTEM STATUS
-                    </h3>
-                    <div className="flex items-center gap-2">
-                      {getStatusIcon(selectedSystem.status)}
-                      <Badge className={getStatusColor(selectedSystem.status)}>
-                        {selectedSystem.status.toUpperCase()}
-                      </Badge>
-                    </div>
-                  </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
 
-                  <div>
-                    <h3 className="text-sm font-medium text-card-foreground tracking-wider mb-2">
-                      SYSTEM INFORMATION
-                    </h3>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Location:</span>
-                        <span className="text-foreground">
-                          {selectedSystem.location}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Uptime:</span>
-                        <span className="text-foreground font-mono">
-                          {selectedSystem.uptime}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">
-                          Last Maintenance:
-                        </span>
-                        <span className="text-foreground font-mono">
-                          {selectedSystem.lastMaintenance}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">
-                          Health Score:
-                        </span>
-                        <span
-                          className={`font-mono ${getHealthColor(
-                            selectedSystem.health
-                          )}`}
-                        >
-                          {selectedSystem.health}%
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+      <Separator />
 
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-sm font-medium text-card-foreground tracking-wider mb-2">
-                      RESOURCE USAGE
-                    </h3>
-                    <div className="space-y-3">
-                      <div>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span className="text-muted-foreground">
-                            CPU Usage
-                          </span>
-                          <span className="text-foreground font-mono">
-                            {selectedSystem.cpu}%
-                          </span>
-                        </div>
-                        <div className="w-full bg-muted rounded-full h-2">
-                          <div
-                            className="bg-primary h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${selectedSystem.cpu}%` }}
-                          ></div>
-                        </div>
-                      </div>
-
-                      <div>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span className="text-muted-foreground">
-                            Memory Usage
-                          </span>
-                          <span className="text-foreground font-mono">
-                            {selectedSystem.memory}%
-                          </span>
-                        </div>
-                        <div className="w-full bg-muted rounded-full h-2">
-                          <div
-                            className="bg-primary h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${selectedSystem.memory}%` }}
-                          ></div>
-                        </div>
-                      </div>
-
-                      <div>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span className="text-muted-foreground">
-                            Storage Usage
-                          </span>
-                          <span className="text-foreground font-mono">
-                            {selectedSystem.storage}%
-                          </span>
-                        </div>
-                        <div className="w-full bg-muted rounded-full h-2">
-                          <div
-                            className="bg-primary h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${selectedSystem.storage}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-2 pt-4 border-t border-border">
-                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                  Restart System
-                </Button>
-                <Button
-                  variant="outline"
-                  className="border-border text-muted-foreground hover:bg-muted hover:text-card-foreground bg-transparent"
+      {/* Social Media Integrations */}
+      <Card className="bg-card border-border">
+        <CardHeader>
+          <CardTitle className="text-foreground">
+            Social Media Integrations
+          </CardTitle>
+          <CardDescription>
+            Connect your social media accounts to streamline your workflow
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* TikTok Integration */}
+          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-black flex items-center justify-center relative overflow-hidden">
+                <svg
+                  className="w-6 h-6 relative z-10"
+                  viewBox="0 0 24 24"
+                  fill="none"
                 >
-                  View Logs
-                </Button>
-                <Button
-                  variant="outline"
-                  className="border-border text-muted-foreground hover:bg-muted hover:text-card-foreground bg-transparent"
-                >
-                  Schedule Maintenance
-                </Button>
+                  <path
+                    d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"
+                    fill="white"
+                  />
+                  <path
+                    d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"
+                    fill="#00F2EA"
+                    style={{ mixBlendMode: "screen" }}
+                  />
+                  <path
+                    d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"
+                    fill="#FF0050"
+                    style={{ mixBlendMode: "screen" }}
+                  />
+                </svg>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+              <div>
+                <p className="font-medium text-foreground">TikTok</p>
+                <p className="text-xs text-muted-foreground">
+                  {tiktokConnected ? "Connected" : "Not connected"}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {tiktokConnected ? (
+                <>
+                  <Badge className="bg-green-500/20 text-green-700">
+                    <CheckCircle className="w-3 h-3 mr-1" />
+                    Connected
+                  </Badge>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+                    onClick={handleDisconnectTikTok}
+                  >
+                    Disconnect
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  size="sm"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                  onClick={handleConnectTikTok}
+                >
+                  <LinkIcon className="w-4 h-4 mr-2" />
+                  Connect
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Instagram Integration */}
+          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#833AB4] via-[#FD1D1D] to-[#FCAF45] flex items-center justify-center">
+                <Instagram className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="font-medium text-foreground">Instagram</p>
+                <p className="text-xs text-muted-foreground">
+                  {instagramConnected ? "Connected" : "Not connected"}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {instagramConnected ? (
+                <>
+                  <Badge className="bg-green-500/20 text-green-700">
+                    <CheckCircle className="w-3 h-3 mr-1" />
+                    Connected
+                  </Badge>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+                    onClick={handleDisconnectInstagram}
+                  >
+                    Disconnect
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  size="sm"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                  onClick={handleConnectInstagram}
+                >
+                  <LinkIcon className="w-4 h-4 mr-2" />
+                  Connect
+                </Button>
+              )}
+            </div>
+          </div>
+
+          <p className="text-xs text-muted-foreground mt-4">
+            More integrations coming soon...
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }

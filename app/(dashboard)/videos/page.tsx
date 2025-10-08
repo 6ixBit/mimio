@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,100 +15,127 @@ import {
   Calendar,
   Eye,
   Video,
+  Loader2,
 } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
+import { videosApi } from "@/lib/supabase";
+
+interface VideoWithProject {
+  id: string;
+  user_id: string;
+  project_id: string | null;
+  template_id: string | null;
+  title: string;
+  video_url: string;
+  thumbnail_url: string | null;
+  prompt: string;
+  model: string;
+  size: string;
+  duration_seconds: number | null;
+  status: string | null;
+  views: number | null;
+  created_at: string;
+  updated_at: string;
+  project?: {
+    name: string;
+  } | null;
+}
 
 export default function VideosPage() {
+  const { user } = useAuth();
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
+  const [videos, setVideos] = useState<VideoWithProject[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Mock video data
-  const videos = [
-    {
-      id: "1",
-      title: "Product Demo - Fitness App",
-      thumbnail:
-        "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&h=225&fit=crop",
-      duration: "0:45",
-      views: 1234,
-      createdAt: "2024-10-06",
-      project: "Fitness App Campaign",
-      status: "published",
-    },
-    {
-      id: "2",
-      title: "Summer Collection Showcase",
-      thumbnail:
-        "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=225&fit=crop",
-      duration: "1:20",
-      views: 2891,
-      createdAt: "2024-10-05",
-      project: "E-commerce Products",
-      status: "published",
-    },
-    {
-      id: "3",
-      title: "Feature Highlight Video",
-      thumbnail:
-        "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=225&fit=crop",
-      duration: "0:58",
-      views: 567,
-      createdAt: "2024-10-04",
-      project: "SaaS Product Demo",
-      status: "draft",
-    },
-    {
-      id: "4",
-      title: "Customer Testimonial",
-      thumbnail:
-        "https://images.unsplash.com/photo-1551434678-e076c223a692?w=400&h=225&fit=crop",
-      duration: "1:15",
-      views: 892,
-      createdAt: "2024-10-03",
-      project: "Fitness App Campaign",
-      status: "published",
-    },
-    {
-      id: "5",
-      title: "Product Unboxing",
-      thumbnail:
-        "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=225&fit=crop",
-      duration: "2:30",
-      views: 3421,
-      createdAt: "2024-10-02",
-      project: "E-commerce Products",
-      status: "published",
-    },
-    {
-      id: "6",
-      title: "How-to Tutorial",
-      thumbnail:
-        "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400&h=225&fit=crop",
-      duration: "3:45",
-      views: 1567,
-      createdAt: "2024-10-01",
-      project: "SaaS Product Demo",
-      status: "processing",
-    },
-  ];
+  // Fetch videos from database
+  useEffect(() => {
+    async function fetchVideos() {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const { data, error } = await videosApi.getAll(user.id);
+
+        if (error) throw error;
+
+        setVideos(data || []);
+      } catch (err) {
+        console.error("Error fetching videos:", err);
+        setError(err instanceof Error ? err.message : "Failed to load videos");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchVideos();
+  }, [user]);
 
   const filteredVideos = videos.filter((video) =>
     video.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Format date helper
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "published":
+      case "completed":
         return "bg-green-500/20 text-green-700";
-      case "draft":
-        return "bg-muted text-muted-foreground";
       case "processing":
         return "bg-primary/20 text-primary";
+      case "failed":
+        return "bg-red-500/20 text-red-700";
       default:
         return "bg-muted text-muted-foreground";
     }
   };
 
+  // Loading state
+  if (loading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      </div>
+    );
+  }
+
+  // Not logged in
+  if (!user) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <Video className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">
+            Please log in
+          </h3>
+          <p className="text-muted-foreground">
+            You need to be logged in to view your videos
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6">
+      {/* Error Message */}
+      {error && (
+        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -145,25 +173,33 @@ export default function VideosPage() {
             <CardContent className="p-0">
               {/* Thumbnail */}
               <div className="relative aspect-video bg-muted overflow-hidden">
-                <img
-                  src={video.thumbnail}
-                  alt={video.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
+                {video.thumbnail_url ? (
+                  <img
+                    src={video.thumbnail_url}
+                    alt={video.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
+                    <Video className="w-12 h-12 text-primary/50" />
+                  </div>
+                )}
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                   <div className="w-14 h-14 rounded-full bg-primary/90 flex items-center justify-center">
                     <Play className="w-6 h-6 text-white ml-1" fill="white" />
                   </div>
                 </div>
-                <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
-                  {video.duration}
-                </div>
+                {video.duration_seconds && (
+                  <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                    {video.duration_seconds}s
+                  </div>
+                )}
                 <Badge
                   className={`absolute top-2 left-2 ${getStatusColor(
-                    video.status
+                    video.status || "processing"
                   )}`}
                 >
-                  {video.status.toUpperCase()}
+                  {(video.status || "processing").toUpperCase()}
                 </Badge>
               </div>
 
@@ -173,19 +209,21 @@ export default function VideosPage() {
                   <h3 className="font-semibold text-foreground line-clamp-2 mb-1">
                     {video.title}
                   </h3>
-                  <p className="text-xs text-muted-foreground">
-                    {video.project}
-                  </p>
+                  {video.project && (
+                    <p className="text-xs text-muted-foreground">
+                      {video.project.name}
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <Eye className="w-3 h-3" />
-                    <span>{video.views.toLocaleString()} views</span>
+                    <span>{(video.views || 0).toLocaleString()} views</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <Calendar className="w-3 h-3" />
-                    <span>{video.createdAt}</span>
+                    <span>{formatDate(video.created_at)}</span>
                   </div>
                 </div>
 
@@ -230,7 +268,10 @@ export default function VideosPage() {
               : "Create your first video to get started"}
           </p>
           {!searchTerm && (
-            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
+            <Button
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              onClick={() => router.push("/")}
+            >
               <Play className="w-4 h-4 mr-2" />
               Create Video
             </Button>

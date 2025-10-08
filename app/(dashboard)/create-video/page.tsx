@@ -18,6 +18,8 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Video, Upload, Loader2, CheckCircle, XCircle } from "lucide-react";
 import { getApiUrl, API_ENDPOINTS } from "@/lib/api-config";
+import { useAuth } from "@/lib/auth-context";
+import { videosApi, storageApi } from "@/lib/supabase";
 
 type VideoStatus = "idle" | "uploading" | "processing" | "completed" | "error";
 
@@ -30,13 +32,15 @@ interface VideoCreationResult {
 
 export default function CreateVideoPage() {
   const searchParams = useSearchParams();
-  
+  const { user } = useAuth();
+
   // Form state - initialize from URL params if available
   const [prompt, setPrompt] = useState("");
   const [model, setModel] = useState("sora-2");
   const [size, setSize] = useState("720x1280");
   const [seconds, setSeconds] = useState("8");
   const [imageReference, setImageReference] = useState<File | null>(null);
+  const [videoTitle, setVideoTitle] = useState("");
 
   // Pre-fill form from URL parameters (e.g., from templates)
   useEffect(() => {
@@ -58,6 +62,7 @@ export default function CreateVideoPage() {
     null
   );
   const [error, setError] = useState<string | null>(null);
+  const [isSavingToDatabase, setIsSavingToDatabase] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -129,6 +134,9 @@ export default function CreateVideoPage() {
           setProgress(100);
           clearInterval(interval);
           setVideoResult(statusData);
+
+          // Automatically save to Supabase
+          await saveVideoToSupabase(videoId);
         } else if (
           statusData.status === "failed" ||
           statusData.status === "error"
@@ -153,13 +161,73 @@ export default function CreateVideoPage() {
     setTimeout(() => clearInterval(interval), 300000);
   };
 
+  const saveVideoToSupabase = async (videoId: string) => {
+    if (!user) {
+      console.log("User not logged in, skipping save to database");
+      return;
+    }
+
+    try {
+      setIsSavingToDatabase(true);
+
+      // Download the video from the API
+      const response = await fetch(
+        getApiUrl(API_ENDPOINTS.VIDEO_DOWNLOAD(videoId))
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch video for upload");
+      }
+
+      const videoBlob = await response.blob();
+
+      // Generate a unique filename
+      const timestamp = Date.now();
+      const fileName = `video_${videoId}_${timestamp}.mp4`;
+
+      // Upload to Supabase Storage
+      const { data: uploadData, error: uploadError } =
+        await storageApi.uploadVideo(user.id, videoBlob, fileName);
+
+      if (uploadError || !uploadData) {
+        throw new Error(
+          uploadError?.message || "Failed to upload video to storage"
+        );
+      }
+
+      // Save metadata to database
+      const title = videoTitle || `Video - ${new Date().toLocaleDateString()}`;
+      const { error: dbError } = await videosApi.create(user.id, {
+        title: title,
+        video_url: uploadData.publicUrl,
+        prompt: prompt,
+        model: model,
+        size: size,
+        duration_seconds: parseInt(seconds),
+      });
+
+      if (dbError) {
+        throw new Error(dbError.message || "Failed to save video to database");
+      }
+
+      console.log("Video saved to Supabase successfully!");
+    } catch (err) {
+      console.error("Error saving video to Supabase:", err);
+      // Don't show error to user as download still works
+    } finally {
+      setIsSavingToDatabase(false);
+    }
+  };
+
   const handleReset = () => {
     setStatus("idle");
     setProgress(0);
     setVideoResult(null);
     setError(null);
     setPrompt("");
+    setVideoTitle("");
     setImageReference(null);
+    setIsSavingToDatabase(false);
   };
 
   const handleDownload = async () => {
@@ -200,6 +268,22 @@ export default function CreateVideoPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Video Title */}
+            <div className="space-y-2">
+              <Label htmlFor="title">Video Title</Label>
+              <Input
+                id="title"
+                placeholder="Enter a title for your video (optional)"
+                value={videoTitle}
+                onChange={(e) => setVideoTitle(e.target.value)}
+                disabled={status !== "idle"}
+                className="bg-background border-border"
+              />
+              <p className="text-xs text-muted-foreground">
+                If left blank, a default title will be generated
+              </p>
+            </div>
+
             {/* Prompt */}
             <div className="space-y-2">
               <Label htmlFor="prompt">
@@ -376,15 +460,27 @@ export default function CreateVideoPage() {
                 <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
                   <p className="text-sm text-green-700">
                     Your video has been generated successfully!
+                    {isSavingToDatabase && " Saving to your library..."}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
                     Video ID: {videoResult.video_id}
                   </p>
+                  {user && !isSavingToDatabase && (
+                    <p className="text-xs text-green-600 mt-1">
+                      ✓ Saved to your video library
+                    </p>
+                  )}
+                  {!user && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Sign in to save videos to your library
+                    </p>
+                  )}
                 </div>
                 <div className="flex gap-2">
                   <Button
                     onClick={handleDownload}
                     className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
+                    disabled={isSavingToDatabase}
                   >
                     <Upload className="w-4 h-4 mr-2" />
                     Download Video
@@ -393,6 +489,7 @@ export default function CreateVideoPage() {
                     onClick={handleReset}
                     variant="outline"
                     className="flex-1 border-border"
+                    disabled={isSavingToDatabase}
                   >
                     Create Another
                   </Button>
