@@ -10,12 +10,12 @@ import {
   Search,
   Play,
   Download,
-  Share2,
   MoreVertical,
   Calendar,
-  Eye,
   Video,
   Loader2,
+  Trash2,
+  X,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { videosApi } from "@/lib/supabase";
@@ -48,6 +48,9 @@ export default function VideosPage() {
   const [videos, setVideos] = useState<VideoWithProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [playingVideo, setPlayingVideo] = useState<VideoWithProject | null>(
+    null
+  );
 
   // Fetch videos from database
   useEffect(() => {
@@ -99,6 +102,42 @@ export default function VideosPage() {
       default:
         return "bg-muted text-muted-foreground";
     }
+  };
+
+  const handleDownload = async (videoUrl: string, title: string) => {
+    try {
+      const response = await fetch(videoUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${title}.mp4`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error("Error downloading video:", err);
+    }
+  };
+
+  const handleDeleteVideo = async (videoId: string) => {
+    if (!confirm("Are you sure you want to delete this video?")) return;
+
+    try {
+      await videosApi.delete(videoId);
+      setVideos(videos.filter((v) => v.id !== videoId));
+    } catch (err) {
+      console.error("Error deleting video:", err);
+    }
+  };
+
+  const handlePlayVideo = (video: VideoWithProject) => {
+    setPlayingVideo(video);
+  };
+
+  const handleClosePlayer = () => {
+    setPlayingVideo(null);
   };
 
   // Loading state
@@ -171,20 +210,34 @@ export default function VideosPage() {
             className="bg-card border-border hover:border-primary/50 transition-all duration-300 cursor-pointer group overflow-hidden"
           >
             <CardContent className="p-0">
-              {/* Thumbnail */}
-              <div className="relative aspect-video bg-muted overflow-hidden">
-                {video.thumbnail_url ? (
+              {/* Thumbnail/Video Preview - Vertical/TikTok Style */}
+              <div
+                className="relative bg-muted overflow-hidden"
+                style={{ aspectRatio: "9/16" }}
+              >
+                {video.video_url ? (
+                  <video
+                    src={video.video_url}
+                    className="w-full h-full object-cover"
+                    preload="metadata"
+                    muted
+                    playsInline
+                  />
+                ) : video.thumbnail_url ? (
                   <img
                     src={video.thumbnail_url}
                     alt={video.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="w-full h-full object-cover"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
                     <Video className="w-12 h-12 text-primary/50" />
                   </div>
                 )}
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <div
+                  className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+                  onClick={() => handlePlayVideo(video)}
+                >
                   <div className="w-14 h-14 rounded-full bg-primary/90 flex items-center justify-center">
                     <Play className="w-6 h-6 text-white ml-1" fill="white" />
                   </div>
@@ -196,10 +249,10 @@ export default function VideosPage() {
                 )}
                 <Badge
                   className={`absolute top-2 left-2 ${getStatusColor(
-                    video.status || "processing"
+                    video.status || "completed"
                   )}`}
                 >
-                  {(video.status || "processing").toUpperCase()}
+                  {(video.status || "completed").toUpperCase()}
                 </Badge>
               </div>
 
@@ -218,12 +271,11 @@ export default function VideosPage() {
 
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <div className="flex items-center gap-1">
-                    <Eye className="w-3 h-3" />
-                    <span>{(video.views || 0).toLocaleString()} views</span>
-                  </div>
-                  <div className="flex items-center gap-1">
                     <Calendar className="w-3 h-3" />
                     <span>{formatDate(video.created_at)}</span>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {video.model}
                   </div>
                 </div>
 
@@ -233,20 +285,18 @@ export default function VideosPage() {
                     size="sm"
                     variant="outline"
                     className="flex-1 border-border text-xs"
+                    onClick={() => handleDownload(video.video_url, video.title)}
                   >
                     <Download className="w-3 h-3 mr-1" />
                     Download
                   </Button>
                   <Button
                     size="sm"
-                    variant="outline"
-                    className="flex-1 border-border text-xs"
+                    variant="ghost"
+                    className="px-3 hover:bg-red-500/10 hover:text-red-600"
+                    onClick={() => handleDeleteVideo(video.id)}
                   >
-                    <Share2 className="w-3 h-3 mr-1" />
-                    Share
-                  </Button>
-                  <Button size="sm" variant="ghost" className="px-2">
-                    <MoreVertical className="w-4 h-4" />
+                    <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
@@ -276,6 +326,81 @@ export default function VideosPage() {
               Create Video
             </Button>
           )}
+        </div>
+      )}
+
+      {/* Video Player Modal */}
+      {playingVideo && (
+        <div
+          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+          onClick={handleClosePlayer}
+        >
+          <div
+            className="relative max-w-4xl w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute -top-12 right-0 text-white hover:bg-white/20"
+              onClick={handleClosePlayer}
+            >
+              <X className="w-6 h-6" />
+            </Button>
+
+            {/* Video Player */}
+            <div className="bg-black rounded-lg overflow-hidden">
+              <video
+                src={playingVideo.video_url}
+                controls
+                autoPlay
+                className="w-full max-h-[80vh] object-contain"
+                controlsList="nodownload"
+              />
+            </div>
+
+            {/* Video Info */}
+            <div className="mt-4 text-white">
+              <h3 className="text-xl font-semibold mb-2">
+                {playingVideo.title}
+              </h3>
+              <div className="flex items-center gap-4 text-sm text-white/70">
+                <span>{formatDate(playingVideo.created_at)}</span>
+                <span>•</span>
+                <span>{playingVideo.model}</span>
+                {playingVideo.duration_seconds && (
+                  <>
+                    <span>•</span>
+                    <span>{playingVideo.duration_seconds}s</span>
+                  </>
+                )}
+              </div>
+              {playingVideo.prompt && (
+                <p className="mt-3 text-sm text-white/80 line-clamp-2">
+                  {playingVideo.prompt}
+                </p>
+              )}
+              <div className="flex gap-2 mt-4">
+                <Button
+                  onClick={() =>
+                    handleDownload(playingVideo.video_url, playingVideo.title)
+                  }
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleClosePlayer}
+                  className="border-white/20 text-white hover:bg-white/10"
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
