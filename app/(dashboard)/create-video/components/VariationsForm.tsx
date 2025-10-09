@@ -34,6 +34,7 @@ interface VariationsFormProps {
     model?: string;
     size?: string;
     seconds?: string;
+    template_id?: string;
   };
   onStart: (videos: TrackedVideo[]) => void;
 }
@@ -107,10 +108,15 @@ export function VariationsForm({
               duration_seconds: parseInt(seconds),
               status: "processing",
               project_id: selectedProject || undefined,
+              template_id: defaultValues?.template_id || undefined,
             });
 
             if (videoData) {
               dbId = (videoData as any).id;
+              // Update with external video ID for polling
+              await videosApi.update(dbId, {
+                external_video_id: video.video_id,
+              });
             }
           }
 
@@ -207,10 +213,12 @@ export function VariationsForm({
               onChange={(e) => setPrompt(e.target.value)}
               required
               disabled={isSubmitting}
-              className="min-h-[100px]"
+              className="h-[400px] resize-y text-lg leading-loose font-mono"
+              style={{ height: "400px" }}
             />
             <p className="text-xs text-muted-foreground">
-              Each variation will use this same prompt but generate unique results
+              Each variation will use this same prompt but generate unique
+              results
             </p>
           </div>
 
@@ -282,7 +290,11 @@ export function VariationsForm({
           {/* Resolution */}
           <div className="space-y-2">
             <Label htmlFor="size">Resolution</Label>
-            <Select value={size} onValueChange={setSize} disabled={isSubmitting}>
+            <Select
+              value={size}
+              onValueChange={setSize}
+              disabled={isSubmitting}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -323,7 +335,9 @@ export function VariationsForm({
                       )}
                     </div>
                     <div>
-                      <p className="text-sm font-medium">{imageReference.name}</p>
+                      <p className="text-sm font-medium">
+                        {imageReference.name}
+                      </p>
                       <p className="text-xs text-muted-foreground">
                         {(imageReference.size / 1024 / 1024).toFixed(2)} MB
                       </p>
@@ -371,7 +385,8 @@ export function VariationsForm({
             ) : (
               <>
                 <Copy className="w-4 h-4 mr-2" />
-                Create {variationCount} Variation{variationCount !== "1" ? "s" : ""}
+                Create {variationCount} Variation
+                {variationCount !== "1" ? "s" : ""}
               </>
             )}
           </Button>
@@ -380,4 +395,3 @@ export function VariationsForm({
     </Card>
   );
 }
-

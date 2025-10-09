@@ -131,6 +131,7 @@ export const templatesApi = {
   // Create a new template
   create: async (data: {
     title: string;
+    description: string;
     video_type: string;
     video_prompt: string;
     original_video_url: string;
@@ -138,6 +139,7 @@ export const templatesApi = {
     size: string;
     duration_seconds: number;
     thumbnail_url?: string;
+    is_active?: boolean;
   }) => {
     return await supabase.from("ad_templates").insert([data]).select().single();
   },

@@ -7,7 +7,7 @@ export type Environment = "local" | "production";
 
 // API Base URLs
 const API_BASE_URLS = {
-  local: "http://localhost:8005",
+  local: "http://localhost:8006",
   production: "https://your-production-url.com", // Update with actual production URL
 } as const;
 
@@ -21,6 +21,9 @@ export const API_ENDPOINTS = {
   VIDEO_DOWNLOAD: (videoId: string) => `/api/videos/${videoId}/download`,
   VIDEO_DELETE: (videoId: string) => `/api/videos/${videoId}`,
   BATCH_STATUS: "/api/videos/batch/status",
+
+  // Video Analysis
+  ANALYZE_VIDEO: "/api/analyze-video",
 
   // System
   ROOT: "/",

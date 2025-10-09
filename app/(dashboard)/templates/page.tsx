@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,194 +34,36 @@ import {
   Zap,
   ExternalLink,
   Plus,
+  Loader2,
 } from "lucide-react";
-import { templatesApi } from "@/lib/supabase";
+import { templatesApi, videosApi } from "@/lib/supabase";
 
 interface VideoTemplate {
   id: string;
   title: string;
-  description: string;
-  prompt: string;
-  thumbnailUrl: string;
-  category: string;
-  duration: string;
+  description: string | null;
+  video_prompt: string;
+  thumbnail_url: string | null;
+  video_type: string;
+  duration_seconds: number;
   model: string;
   size: string;
-  seconds: string;
-  socialMediaUrl: string;
+  original_video_url: string;
+  is_active: boolean;
 }
 
-// Mock template data - will be replaced with database later
-const templates: VideoTemplate[] = [
-  {
-    id: "1",
-    title: "Product Showcase - Modern Tech",
-    description: "Sleek product reveal with dynamic camera movements",
-    prompt:
-      "A sleek modern smartphone floating in a minimalist white space, slowly rotating to show all angles. Soft studio lighting creates elegant reflections on the glass surface. Camera slowly zooms in on the device as holographic UI elements appear around it. Professional product photography style.",
-    thumbnailUrl: "/placeholder.jpg",
-    category: "POV",
-    duration: "8s",
-    model: "sora-2",
-    size: "720x1280",
-    seconds: "8",
-    socialMediaUrl: "https://www.tiktok.com/@example/video/123",
-  },
-  {
-    id: "2",
-    title: "Fashion Brand - Urban Style",
-    description: "Dynamic fashion ad with urban energy",
-    prompt:
-      "A confident model walking down a vibrant city street at golden hour, wearing trendy streetwear. Dynamic camera follows alongside as they move with purpose. Neon signs and traffic blur in the background. Urban fashion editorial style with cinematic color grading.",
-    thumbnailUrl: "/placeholder.jpg",
-    category: "Review",
-    duration: "15s",
-    model: "sora-2-pro",
-    size: "720x1280",
-    seconds: "15",
-    socialMediaUrl: "https://www.instagram.com/p/example123",
-  },
-  {
-    id: "3",
-    title: "Food & Beverage - Appetizing",
-    description: "Mouth-watering food presentation",
-    prompt:
-      "Close-up of a gourmet burger being assembled in slow motion. Each layer drops perfectly - fresh lettuce, juicy tomatoes, melted cheese, and a perfectly cooked patty. Ingredients are vibrant and fresh. Steam rises from the hot patty. Professional food photography with dramatic lighting.",
-    thumbnailUrl: "/placeholder.jpg",
-    category: "Unboxing",
-    duration: "8s",
-    model: "sora-2",
-    size: "1280x720",
-    seconds: "8",
-    socialMediaUrl: "https://www.youtube.com/shorts/example",
-  },
-  {
-    id: "4",
-    title: "Fitness Motivation",
-    description: "High-energy workout inspiration",
-    prompt:
-      "Athletic person doing intense workout in a modern gym. Quick cuts between different exercises - push-ups, weights, running. Sweat droplets fly in slow motion. Dramatic lighting with strong contrast. Motivational and energetic atmosphere. Sports commercial style.",
-    thumbnailUrl: "/placeholder.jpg",
-    category: "Tutorial",
-    duration: "12s",
-    model: "sora-2",
-    size: "720x1280",
-    seconds: "12",
-    socialMediaUrl: "https://www.tiktok.com/@fitness/video/456",
-  },
-  {
-    id: "5",
-    title: "Real Estate - Luxury Home",
-    description: "Elegant property tour",
-    prompt:
-      "Smooth cinematic walkthrough of a luxurious modern home. Sunlight streams through floor-to-ceiling windows. Camera glides through open-concept living spaces showcasing high-end finishes and minimalist design. Peaceful and aspirational atmosphere. Architectural videography style.",
-    thumbnailUrl: "/placeholder.jpg",
-    category: "Showcase",
-    duration: "15s",
-    model: "sora-2-pro",
-    size: "1280x720",
-    seconds: "15",
-    socialMediaUrl: "https://www.instagram.com/p/realestate789",
-  },
-  {
-    id: "6",
-    title: "App Launch - Tech Innovation",
-    description: "Modern app demonstration",
-    prompt:
-      "Hands interacting with a smartphone showing a sleek mobile app interface. Smooth transitions between different app screens with animated UI elements. Modern tech aesthetic with glowing accents. Close-up shots of fingers swiping and tapping. Tech commercial style with futuristic vibe.",
-    thumbnailUrl: "/placeholder.jpg",
-    category: "Demo",
-    duration: "12s",
-    model: "sora-2",
-    size: "720x1280",
-    seconds: "12",
-    socialMediaUrl: "https://www.tiktok.com/@tech/video/789",
-  },
-  {
-    id: "7",
-    title: "Travel & Tourism - Adventure",
-    description: "Epic travel destination showcase",
-    prompt:
-      "Breathtaking aerial drone shot soaring over tropical paradise. Crystal clear turquoise water, white sand beaches, and lush green mountains. Camera sweeps dramatically through the landscape. Golden hour lighting creates warm, inviting atmosphere. Travel documentary cinematography style.",
-    thumbnailUrl: "/placeholder.jpg",
-    category: "POV",
-    duration: "15s",
-    model: "sora-2-pro",
-    size: "1792x1024",
-    seconds: "15",
-    socialMediaUrl: "https://www.youtube.com/shorts/travel456",
-  },
-  {
-    id: "8",
-    title: "Skincare Brand - Clean Beauty",
-    description: "Elegant beauty product showcase",
-    prompt:
-      "Minimal beauty product sitting on a clean white surface surrounded by natural elements - water droplets, green leaves, soft light. Product slowly rotates as water droplets fall in slow motion. Fresh, clean, and organic aesthetic. High-end beauty commercial style.",
-    thumbnailUrl: "/placeholder.jpg",
-    category: "Review",
-    duration: "8s",
-    model: "sora-2",
-    size: "720x1280",
-    seconds: "8",
-    socialMediaUrl: "https://www.instagram.com/p/beauty101",
-  },
-  {
-    id: "9",
-    title: "Car Commercial - Speed",
-    description: "Dynamic automotive showcase",
-    prompt:
-      "Sleek sports car speeding down a winding mountain road at sunset. Dynamic camera angles capture the car's curves and power. Motion blur emphasizes speed. Dramatic lighting highlights the vehicle's design. Automotive commercial cinematography with cinematic color grading.",
-    thumbnailUrl: "/placeholder.jpg",
-    category: "Showcase",
-    duration: "12s",
-    model: "sora-2-pro",
-    size: "1792x1024",
-    seconds: "12",
-    socialMediaUrl: "https://www.youtube.com/shorts/cars789",
-  },
-  {
-    id: "10",
-    title: "Coffee Shop - Cozy Vibe",
-    description: "Warm and inviting cafe atmosphere",
-    prompt:
-      "Steam rising from a perfectly made latte with intricate foam art. Cozy coffee shop background with warm lighting and bokeh effect. Barista's hands carefully pouring milk. Close-up shots of coffee beans and brewing process. Warm, inviting, and artisanal feel.",
-    thumbnailUrl: "/placeholder.jpg",
-    category: "Tutorial",
-    duration: "8s",
-    model: "sora-2",
-    size: "720x1280",
-    seconds: "8",
-    socialMediaUrl: "https://www.tiktok.com/@coffee/video/321",
-  },
-  {
-    id: "11",
-    title: "Gaming - Epic Action",
-    description: "High-energy gaming showcase",
-    prompt:
-      "First-person perspective of intense gaming action. Quick cuts between epic game moments - explosions, character abilities, dramatic victories. RGB lighting reflects on player's face. Controller in hands with rapid button presses. Gaming content creator style with vibrant colors.",
-    thumbnailUrl: "/placeholder.jpg",
-    category: "POV",
-    duration: "12s",
-    model: "sora-2",
-    size: "1280x720",
-    seconds: "12",
-    socialMediaUrl: "https://www.youtube.com/shorts/gaming999",
-  },
-  {
-    id: "12",
-    title: "Jewelry - Elegant Luxury",
-    description: "Sophisticated jewelry presentation",
-    prompt:
-      "Sparkling diamond necklace rotating on a black velvet surface. Dramatic lighting creates brilliant light reflections through the gemstones. Macro close-up reveals intricate details. Elegant and luxurious atmosphere. High-end jewelry commercial style.",
-    thumbnailUrl: "/placeholder.jpg",
-    category: "Unboxing",
-    duration: "8s",
-    model: "sora-2-pro",
-    size: "720x1280",
-    seconds: "8",
-    socialMediaUrl: "https://www.instagram.com/p/jewelry555",
-  },
-];
+interface GeneratedVideo {
+  id: string;
+  title: string;
+  video_url: string;
+  thumbnail_url: string | null;
+  prompt: string;
+  model: string;
+  size: string;
+  duration_seconds: number | null;
+  status: string | null;
+  created_at: string;
+}
 
 const categories = [
   "All",
@@ -231,13 +73,22 @@ const categories = [
   "Tutorial",
   "Showcase",
   "Demo",
+  "UGC",
 ];
 
 export default function TemplatesPage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
-  
+  const [templates, setTemplates] = useState<VideoTemplate[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Template videos modal
+  const [selectedTemplate, setSelectedTemplate] =
+    useState<VideoTemplate | null>(null);
+  const [templateVideos, setTemplateVideos] = useState<GeneratedVideo[]>([]);
+  const [videosLoading, setVideosLoading] = useState(false);
+
   // Add template dialog
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -251,10 +102,51 @@ export default function TemplatesPage() {
     duration_seconds: "8",
   });
 
+  // Fetch templates on mount
+  useEffect(() => {
+    async function fetchTemplates() {
+      try {
+        const { data, error } = await templatesApi.getAll();
+        if (error) throw error;
+        console.log("Templates from DB:", data);
+
+        // For each template, try to get a sample video to use as thumbnail
+        const templatesWithThumbnails = await Promise.all(
+          (data || []).map(async (template) => {
+            try {
+              const { data: videos } = await templatesApi.getGeneratedVideos(
+                template.id,
+                1
+              );
+              const sampleVideo = videos?.[0];
+              return {
+                ...template,
+                thumbnail_url:
+                  sampleVideo?.thumbnail_url ||
+                  sampleVideo?.video_url ||
+                  template.thumbnail_url,
+              };
+            } catch (err) {
+              return template; // Return original template if fetching videos fails
+            }
+          })
+        );
+
+        setTemplates(templatesWithThumbnails);
+      } catch (err) {
+        console.error("Error fetching templates:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchTemplates();
+  }, []);
+
   // Filter templates
   const filteredTemplates = templates.filter((template) => {
     const matchesCategory =
-      selectedCategory === "All" || template.category === selectedCategory;
+      selectedCategory === "All" || template.video_type === selectedCategory;
 
     return matchesCategory;
   });
@@ -262,16 +154,42 @@ export default function TemplatesPage() {
   const handleRecreate = (template: VideoTemplate) => {
     // Navigate to create-video page with template data as URL params
     const params = new URLSearchParams({
-      prompt: template.prompt,
+      prompt: template.video_prompt,
       model: template.model,
       size: template.size,
-      seconds: template.seconds,
+      seconds: template.duration_seconds.toString(),
+      template_id: template.id, // Pass template ID to link the created video
     });
     router.push(`/create-video?${params.toString()}`);
   };
 
   const handleViewOriginal = (url: string) => {
     window.open(url, "_blank", "noopener,noreferrer");
+  };
+
+  const handleViewTemplateVideos = async (template: VideoTemplate) => {
+    setSelectedTemplate(template);
+    setVideosLoading(true);
+
+    try {
+      const { data, error } = await templatesApi.getGeneratedVideos(
+        template.id,
+        20
+      );
+      if (error) throw error;
+      console.log("Videos for template:", data);
+      setTemplateVideos(data || []);
+    } catch (err) {
+      console.error("Error fetching template videos:", err);
+      setTemplateVideos([]);
+    } finally {
+      setVideosLoading(false);
+    }
+  };
+
+  const handleCloseVideosModal = () => {
+    setSelectedTemplate(null);
+    setTemplateVideos([]);
   };
 
   const handleSubmitTemplate = async (e: React.FormEvent) => {
@@ -287,11 +205,17 @@ export default function TemplatesPage() {
         model: formData.model,
         size: formData.size,
         duration_seconds: parseInt(formData.duration_seconds),
+        is_active: true,
       });
 
       if (error) {
         alert("Error creating template: " + error.message);
         return;
+      }
+
+      // Add new template to state
+      if (data) {
+        setTemplates([data, ...templates]);
       }
 
       // Reset form and close dialog
@@ -305,7 +229,7 @@ export default function TemplatesPage() {
         duration_seconds: "8",
       });
       setIsDialogOpen(false);
-      alert("Template added successfully! Refresh to see it.");
+      alert("Template added successfully!");
     } catch (err) {
       console.error("Error:", err);
       alert("Failed to add template");
@@ -380,6 +304,7 @@ export default function TemplatesPage() {
                         <SelectItem value="Tutorial">Tutorial</SelectItem>
                         <SelectItem value="Showcase">Showcase</SelectItem>
                         <SelectItem value="Demo">Demo</SelectItem>
+                        <SelectItem value="UGC">UGC</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -473,10 +398,18 @@ export default function TemplatesPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="720x1280">720x1280 (Vertical)</SelectItem>
-                        <SelectItem value="1280x720">1280x720 (Horizontal)</SelectItem>
-                        <SelectItem value="1024x1792">1024x1792 (Portrait)</SelectItem>
-                        <SelectItem value="1792x1024">1792x1024 (Landscape)</SelectItem>
+                        <SelectItem value="720x1280">
+                          720x1280 (Vertical)
+                        </SelectItem>
+                        <SelectItem value="1280x720">
+                          1280x720 (Horizontal)
+                        </SelectItem>
+                        <SelectItem value="1024x1792">
+                          1024x1792 (Portrait)
+                        </SelectItem>
+                        <SelectItem value="1792x1024">
+                          1792x1024 (Landscape)
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -512,17 +445,6 @@ export default function TemplatesPage() {
       {/* Search and Filter */}
       <Card className="bg-card border-border">
         <CardContent className="p-6 space-y-4">
-          {/* Search */}
-          {/* <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search templates by name, description, or tags..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-background border-border"
-            />
-          </div> */}
-
           {/* Category Filters */}
           <div className="flex flex-wrap gap-2">
             {categories.map((category) => (
@@ -552,85 +474,211 @@ export default function TemplatesPage() {
         </p>
       </div>
 
-      {/* Templates Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredTemplates.map((template) => (
-          <Card
-            key={template.id}
-            className="bg-card border-border hover:border-primary/50 transition-all duration-200 group"
-          >
-            <CardHeader className="p-0">
-              {/* Thumbnail */}
-              <div className="relative h-48 bg-gradient-to-br from-primary/20 to-primary/5 rounded-t-lg overflow-hidden">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Play className="w-12 h-12 text-primary/50 group-hover:text-primary/80 transition-colors" />
-                </div>
-                <div className="absolute top-3 right-3">
-                  <Badge
-                    variant="secondary"
-                    className="bg-background/80 backdrop-blur-sm"
-                  >
-                    {template.duration}
-                  </Badge>
-                </div>
-                <div className="absolute top-3 left-3">
-                  <Badge
-                    variant="secondary"
-                    className="bg-background/80 backdrop-blur-sm flex items-center gap-1"
-                  >
-                    {getCategoryIcon(template.category)}
-                    {template.category}
-                  </Badge>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="p-4 space-y-3">
-              <div>
-                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
-                  {template.title}
+      {/* Loading State */}
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 text-primary animate-spin" />
+        </div>
+      ) : (
+        <>
+          {/* Templates Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredTemplates.map((template) => (
+              <Card
+                key={template.id}
+                className="bg-card border-border hover:border-primary/50 transition-all duration-200 group"
+              >
+                <CardHeader className="p-0">
+                  {/* Thumbnail */}
+                  <div className="relative h-48 bg-gradient-to-br from-primary/20 to-primary/5 rounded-t-lg overflow-hidden">
+                    {template.thumbnail_url ? (
+                      <>
+                        {template.thumbnail_url.includes(".mp4") ||
+                        template.thumbnail_url.includes("video") ? (
+                          <video
+                            src={template.thumbnail_url}
+                            className="w-full h-full object-cover"
+                            preload="metadata"
+                            muted
+                            playsInline
+                          />
+                        ) : (
+                          <img
+                            src={template.thumbnail_url}
+                            alt={template.title}
+                            className="w-full h-full object-cover"
+                          />
+                        )}
+                        <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Play className="w-12 h-12 text-white drop-shadow-lg" />
+                        </div>
+                      </>
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Play className="w-12 h-12 text-primary/50 group-hover:text-primary/80 transition-colors" />
+                      </div>
+                    )}
+                    <div className="absolute top-3 right-3">
+                      <Badge
+                        variant="secondary"
+                        className="bg-background/80 backdrop-blur-sm"
+                      >
+                        {template.duration_seconds}s
+                      </Badge>
+                    </div>
+                    <div className="absolute top-3 left-3">
+                      <Badge
+                        variant="secondary"
+                        className="bg-background/80 backdrop-blur-sm flex items-center gap-1"
+                      >
+                        {getCategoryIcon(template.video_type)}
+                        {template.video_type}
+                      </Badge>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4 space-y-3">
+                  <div>
+                    <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
+                      {template.title}
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {template.description}
+                    </p>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="space-y-2 pt-2">
+                    <Button
+                      onClick={() => handleViewTemplateVideos(template)}
+                      variant="outline"
+                      className="w-full border-border hover:border-primary"
+                    >
+                      <Video className="w-4 h-4 mr-2" />
+                      See Generated Videos
+                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => handleRecreate(template)}
+                        className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
+                      >
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Recreate
+                      </Button>
+                      <Button
+                        onClick={() =>
+                          handleViewOriginal(template.original_video_url)
+                        }
+                        variant="outline"
+                        size="icon"
+                        className="border-border hover:border-primary"
+                        title="View Original"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Empty State */}
+          {filteredTemplates.length === 0 && (
+            <Card className="bg-card border-border">
+              <CardContent className="p-12 text-center">
+                <Video className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">
+                  No templates found
                 </h3>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {template.description}
+                <p className="text-sm text-muted-foreground">
+                  Try adjusting your filters
                 </p>
-              </div>
+              </CardContent>
+            </Card>
+          )}
+        </>
+      )}
 
-              {/* Action Buttons */}
-              <div className="flex gap-2 pt-2">
-                <Button
-                  onClick={() => handleRecreate(template)}
-                  className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
-                >
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Recreate
-                </Button>
-                <Button
-                  onClick={() => handleViewOriginal(template.socialMediaUrl)}
-                  variant="outline"
-                  size="icon"
-                  className="border-border hover:border-primary"
-                  title="View Original"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {/* Template Videos Modal */}
+      {selectedTemplate && (
+        <Dialog open={!!selectedTemplate} onOpenChange={handleCloseVideosModal}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                Videos Generated from "{selectedTemplate.title}"
+              </DialogTitle>
+              <DialogDescription>
+                Videos created using this template by users
+              </DialogDescription>
+            </DialogHeader>
 
-      {/* Empty State */}
-      {filteredTemplates.length === 0 && (
-        <Card className="bg-card border-border">
-          <CardContent className="p-12 text-center">
-            <Video className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">
-              No templates found
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              Try adjusting your search or filters
-            </p>
-          </CardContent>
-        </Card>
+            {videosLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 text-primary animate-spin" />
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {templateVideos.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Video className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">
+                      No videos yet
+                    </h3>
+                    <p className="text-muted-foreground">
+                      Be the first to create a video using this template!
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {templateVideos.map((video) => (
+                      <Card key={video.id} className="bg-card border-border">
+                        <CardContent className="p-0">
+                          <div
+                            className="relative bg-muted overflow-hidden"
+                            style={{ aspectRatio: "9/16" }}
+                          >
+                            {video.video_url ? (
+                              <video
+                                src={video.video_url}
+                                className="w-full h-full object-cover"
+                                preload="metadata"
+                                muted
+                                playsInline
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
+                                <Video className="w-8 h-8 text-primary/50" />
+                              </div>
+                            )}
+                            {video.duration_seconds && (
+                              <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                                {video.duration_seconds}s
+                              </div>
+                            )}
+                          </div>
+                          <div className="p-3 space-y-2">
+                            <h4 className="font-medium text-sm line-clamp-2">
+                              {video.title}
+                            </h4>
+                            <div className="flex items-center justify-between text-xs text-muted-foreground">
+                              <span>{video.model}</span>
+                              <span>
+                                {new Date(
+                                  video.created_at
+                                ).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );

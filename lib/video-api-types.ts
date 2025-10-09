@@ -91,6 +91,7 @@ export interface TrackedVideo {
   error?: string;
   createdAt: Date;
   result?: VideoCreationResult;
+  videoUrl?: string; // URL for playing the video
 }
 
 export interface BatchCreationState {

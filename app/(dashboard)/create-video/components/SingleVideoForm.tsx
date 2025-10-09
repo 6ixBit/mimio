@@ -14,14 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Video,
-  Upload,
-  FolderOpen,
-  X,
-  ImageIcon,
-  Loader2,
-} from "lucide-react";
+import { Video, Upload, FolderOpen, X, ImageIcon, Loader2 } from "lucide-react";
 import { VideoApiClient } from "@/lib/video-api-client";
 import { videosApi } from "@/lib/supabase";
 import type { TrackedVideo } from "@/lib/video-api-types";
@@ -34,6 +27,7 @@ interface SingleVideoFormProps {
     model?: string;
     size?: string;
     seconds?: string;
+    template_id?: string;
   };
   onStart: (videos: TrackedVideo[]) => void;
 }
@@ -79,7 +73,8 @@ export function SingleVideoForm({
       // Create database record first (if user is logged in)
       let dbId: string | undefined;
       if (user) {
-        const title = videoTitle || `Video - ${new Date().toLocaleDateString()}`;
+        const title =
+          videoTitle || `Video - ${new Date().toLocaleDateString()}`;
         const { data: videoData, error: dbError } = await videosApi.create(
           user.id,
           {
@@ -91,6 +86,7 @@ export function SingleVideoForm({
             duration_seconds: parseInt(seconds),
             status: "processing",
             project_id: selectedProject || undefined,
+            template_id: defaultValues?.template_id || undefined,
           }
         );
 
@@ -107,6 +103,13 @@ export function SingleVideoForm({
         seconds,
         imageReference: imageReference || undefined,
       });
+
+      // Update database with external video ID for polling
+      if (user && dbId) {
+        await videosApi.update(dbId, {
+          external_video_id: result.video_id,
+        });
+      }
 
       // Create tracked video
       const trackedVideo: TrackedVideo = {
@@ -132,9 +135,7 @@ export function SingleVideoForm({
       setImageReference(null);
     } catch (error) {
       console.error("Creation error:", error);
-      alert(
-        error instanceof Error ? error.message : "Failed to create video"
-      );
+      alert(error instanceof Error ? error.message : "Failed to create video");
       setIsSubmitting(false);
     }
   };
@@ -198,7 +199,8 @@ export function SingleVideoForm({
               onChange={(e) => setPrompt(e.target.value)}
               required
               disabled={isSubmitting}
-              className="min-h-[100px]"
+              className="h-[400px] resize-y text-lg leading-loose font-mono"
+              style={{ height: "400px" }}
             />
             <p className="text-xs text-muted-foreground">
               Be specific and descriptive for best results
@@ -248,7 +250,11 @@ export function SingleVideoForm({
           {/* Resolution */}
           <div className="space-y-2">
             <Label htmlFor="size">Resolution</Label>
-            <Select value={size} onValueChange={setSize} disabled={isSubmitting}>
+            <Select
+              value={size}
+              onValueChange={setSize}
+              disabled={isSubmitting}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -297,7 +303,9 @@ export function SingleVideoForm({
                       )}
                     </div>
                     <div>
-                      <p className="text-sm font-medium">{imageReference.name}</p>
+                      <p className="text-sm font-medium">
+                        {imageReference.name}
+                      </p>
                       <p className="text-xs text-muted-foreground">
                         {(imageReference.size / 1024 / 1024).toFixed(2)} MB
                       </p>
@@ -361,4 +369,3 @@ export function SingleVideoForm({
     </Card>
   );
 }
-

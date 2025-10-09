@@ -10,18 +10,21 @@ import {
   Loader2,
   Download,
   RefreshCw,
+  Play,
 } from "lucide-react";
 import type { TrackedVideo } from "@/lib/video-api-types";
 
 interface BatchVideoProgressProps {
   videos: TrackedVideo[];
   onDownload: (videoId: string, title: string) => void;
+  onPlay: (video: TrackedVideo) => void;
   onReset: () => void;
 }
 
 export function BatchVideoProgress({
   videos,
   onDownload,
+  onPlay,
   onReset,
 }: BatchVideoProgressProps) {
   const completedCount = videos.filter((v) => v.status === "completed").length;
@@ -133,17 +136,26 @@ export function BatchVideoProgress({
                 </p>
               )}
 
-              {/* Download Button */}
+              {/* Action Buttons */}
               {video.status === "completed" && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => onDownload(video.id, video.title)}
-                >
-                  <Download className="w-3 h-3 mr-2" />
-                  Download
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => onPlay(video)}
+                  >
+                    <Play className="w-3 h-3 mr-2" />
+                    Play
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onDownload(video.id, video.title)}
+                  >
+                    <Download className="w-3 h-3" />
+                  </Button>
+                </div>
               )}
             </div>
           ))}

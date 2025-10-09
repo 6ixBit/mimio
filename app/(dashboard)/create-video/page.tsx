@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Video, Copy } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Video, Copy, X } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { videosApi, storageApi, projectsApi } from "@/lib/supabase";
 import { VideoApiClient } from "@/lib/video-api-client";
@@ -32,6 +33,9 @@ export default function CreateVideoPage() {
   // Video tracking state
   const [trackedVideos, setTrackedVideos] = useState<TrackedVideo[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Video player state
+  const [playingVideo, setPlayingVideo] = useState<TrackedVideo | null>(null);
 
   // Update tab when URL mode changes
   useEffect(() => {
@@ -63,6 +67,7 @@ export default function CreateVideoPage() {
   const urlModel = searchParams.get("model") || "sora-2";
   const urlSize = searchParams.get("size") || "720x1280";
   const urlSeconds = searchParams.get("seconds") || "8";
+  const urlTemplateId = searchParams.get("template_id") || "";
 
   /**
    * Handle video download
@@ -176,6 +181,15 @@ export default function CreateVideoPage() {
         status: "completed",
       });
 
+      // Update tracked video with video URL
+      setTrackedVideos((prev) =>
+        prev.map((v) =>
+          v.id === videoId
+            ? { ...v, videoUrl: uploadData.publicUrl, status: "completed" }
+            : v
+        )
+      );
+
       console.log("Video saved to Supabase:", dbId);
     } catch (error) {
       console.error("Error saving to Supabase:", error);
@@ -205,6 +219,20 @@ export default function CreateVideoPage() {
     });
   };
 
+  /**
+   * Handle playing a video
+   */
+  const handlePlayVideo = (video: TrackedVideo) => {
+    setPlayingVideo(video);
+  };
+
+  /**
+   * Handle closing video player
+   */
+  const handleClosePlayer = () => {
+    setPlayingVideo(null);
+  };
+
   return (
     <div className="p-6 space-y-6 max-w-6xl mx-auto">
       <div>
@@ -221,6 +249,7 @@ export default function CreateVideoPage() {
         <BatchVideoProgress
           videos={trackedVideos}
           onDownload={handleDownload}
+          onPlay={handlePlayVideo}
           onReset={handleReset}
         />
       ) : (
@@ -246,6 +275,7 @@ export default function CreateVideoPage() {
                 model: urlModel,
                 size: urlSize,
                 seconds: urlSeconds,
+                template_id: urlTemplateId,
               }}
               onStart={handleStartVideos}
             />
@@ -259,11 +289,54 @@ export default function CreateVideoPage() {
                 model: urlModel,
                 size: urlSize,
                 seconds: urlSeconds,
+                template_id: urlTemplateId,
               }}
               onStart={handleStartVideos}
             />
           </TabsContent>
         </Tabs>
+      )}
+
+      {/* Video Player Modal */}
+      {playingVideo && (
+        <div
+          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+          onClick={handleClosePlayer}
+        >
+          <div
+            className="bg-card rounded-lg max-w-3xl w-full max-h-[85vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <h3 className="text-lg font-semibold text-foreground">
+                {playingVideo.title}
+              </h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleClosePlayer}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            <div className="p-4">
+              {playingVideo.videoUrl ? (
+                <video
+                  src={playingVideo.videoUrl}
+                  controls
+                  className="w-full h-auto max-h-[500px] rounded-lg"
+                  autoPlay
+                  controlsList="nodownload"
+                />
+              ) : (
+                <div className="flex items-center justify-center h-64 bg-muted rounded-lg">
+                  <p className="text-muted-foreground">Video not available</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

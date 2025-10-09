@@ -3,6 +3,12 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -19,7 +25,9 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
-import { videosApi } from "@/lib/supabase";
+import { videosApi, templatesApi } from "@/lib/supabase";
+import { SaveTemplateModal } from "@/components/templates/save-template-modal";
+import { VideoApiClient } from "@/lib/video-api-client";
 
 interface VideoWithProject {
   id: string;
@@ -34,6 +42,8 @@ interface VideoWithProject {
   size: string;
   duration_seconds: number | null;
   status: string | null;
+  external_video_id: string | null;
+  progress: number | null;
   views: number | null;
   created_at: string;
   updated_at: string;
@@ -50,6 +60,9 @@ export default function VideosPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [playingVideo, setPlayingVideo] = useState<VideoWithProject | null>(
+    null
+  );
+  const [templateVideo, setTemplateVideo] = useState<VideoWithProject | null>(
     null
   );
 
@@ -83,6 +96,52 @@ export default function VideosPage() {
 
     fetchVideos();
   }, [user]);
+
+  // Poll processing videos for progress updates
+  useEffect(() => {
+    const processingVideos = videos.filter(
+      (v) => v.status === "processing" && v.external_video_id
+    );
+
+    if (processingVideos.length === 0) return;
+
+    const pollInterval = setInterval(async () => {
+      for (const video of processingVideos) {
+        try {
+          const status = await VideoApiClient.checkStatus(
+            video.external_video_id!
+          );
+
+          // Update video in state with new progress
+          setVideos((prev) =>
+            prev.map((v) =>
+              v.id === video.id ? { ...v, progress: status.progress || 0 } : v
+            )
+          );
+
+          // If completed, update database and refresh
+          if (status.status === "completed" && status.video_url) {
+            // Update database
+            await videosApi.update(video.id, {
+              status: "completed",
+              video_url: status.video_url,
+              progress: 100,
+            });
+
+            // Refresh videos list
+            const { data } = await videosApi.getAll(user!.id);
+            if (data) {
+              setVideos(data.filter((video) => video.status !== "failed"));
+            }
+          }
+        } catch (error) {
+          console.error(`Error polling video ${video.id}:`, error);
+        }
+      }
+    }, 3000); // Poll every 3 seconds
+
+    return () => clearInterval(pollInterval);
+  }, [videos, user]);
 
   const filteredVideos = videos.filter((video) =>
     video.title.toLowerCase().includes(searchTerm.toLowerCase())
@@ -144,6 +203,41 @@ export default function VideosPage() {
 
   const handleClosePlayer = () => {
     setPlayingVideo(null);
+  };
+
+  const handleSaveAsTemplate = async (video: VideoWithProject) => {
+    setTemplateVideo(video);
+  };
+
+  const handleCreateTemplate = async (data: {
+    title: string;
+    description: string;
+    video_type: string;
+  }) => {
+    if (!templateVideo) return;
+
+    try {
+      const { error } = await templatesApi.create({
+        title: data.title,
+        description: data.description,
+        video_type: data.video_type,
+        video_prompt: templateVideo.prompt,
+        original_video_url: templateVideo.video_url,
+        model: templateVideo.model,
+        size: templateVideo.size,
+        duration_seconds: templateVideo.duration_seconds || 8,
+        thumbnail_url: templateVideo.thumbnail_url || undefined,
+        is_active: true,
+      });
+
+      if (error) throw error;
+
+      alert("Template created successfully!");
+      setTemplateVideo(null);
+    } catch (err) {
+      console.error("Error creating template:", err);
+      alert("Failed to create template. Please try again.");
+    }
   };
 
   const handleRecreate = (video: VideoWithProject) => {
@@ -233,12 +327,25 @@ export default function VideosPage() {
                 style={{ aspectRatio: "9/16" }}
               >
                 {video.status === "processing" ? (
-                  // Processing state - show loader
+                  // Processing state - show loader with progress
                   <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
                     <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground mb-2">
                       Generating...
                     </p>
+                    {video.progress !== null && video.progress > 0 && (
+                      <div className="w-2/3">
+                        <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                          <div
+                            className="bg-primary h-full transition-all duration-300"
+                            style={{ width: `${video.progress}%` }}
+                          />
+                        </div>
+                        <p className="text-xs text-center text-muted-foreground mt-1">
+                          {video.progress}%
+                        </p>
+                      </div>
+                    )}
                   </div>
                 ) : video.video_url ? (
                   // Completed - show video thumbnail
@@ -330,15 +437,29 @@ export default function VideosPage() {
                       >
                         <Download className="w-4 h-4" />
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="px-3 hover:bg-red-500/10 hover:text-red-600"
-                        onClick={() => handleDeleteVideo(video.id)}
-                        title="Delete"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button size="sm" variant="ghost" className="px-3">
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => handleSaveAsTemplate(video)}
+                            className="cursor-pointer"
+                          >
+                            <Sparkles className="w-4 h-4 mr-2" />
+                            Save as Template
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleDeleteVideo(video.id)}
+                            className="cursor-pointer text-red-600 focus:text-red-600"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </>
                   ) : (
                     <div className="flex-1 text-center py-2">
@@ -377,6 +498,14 @@ export default function VideosPage() {
           )}
         </div>
       )}
+
+      {/* Save Template Modal */}
+      <SaveTemplateModal
+        isOpen={!!templateVideo}
+        onClose={() => setTemplateVideo(null)}
+        onSave={handleCreateTemplate}
+        defaultTitle={templateVideo?.title || ""}
+      />
 
       {/* Video Player Modal */}
       {playingVideo && (

@@ -12,6 +12,7 @@ import {
   Sparkles,
   LogOut,
   User,
+  Wand2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EnvironmentToggle } from "@/components/environment-toggle";
@@ -33,6 +34,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     if (pathname.startsWith("/videos")) return "videos";
     if (pathname.startsWith("/projects")) return "projects";
     if (pathname.startsWith("/templates")) return "templates";
+    if (pathname.startsWith("/analyze")) return "analyze";
     if (pathname.startsWith("/settings")) return "settings";
     if (pathname.startsWith("/create-video")) return "home";
     return "home";
@@ -50,6 +52,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     if (pathname === "/videos") return "Videos";
     if (pathname === "/projects") return "Projects";
     if (pathname === "/templates") return "Templates";
+    if (pathname === "/analyze") return "Mimic Video";
     if (pathname === "/settings") return "Settings";
     if (pathname === "/create-video") return "Create Videos";
     return "Mimio";
@@ -97,6 +100,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 icon: Sparkles,
                 label: "AD TEMPLATES",
                 path: "/templates",
+              },
+              {
+                id: "analyze",
+                icon: Wand2,
+                label: "MIMIC VIDEO",
+                path: "/analyze",
               },
               {
                 id: "videos",

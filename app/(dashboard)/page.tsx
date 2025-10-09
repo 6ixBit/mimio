@@ -1,6 +1,6 @@
 "use client";
 
-import { Video, Sparkles, Calendar, FolderOpen } from "lucide-react";
+import { Video, Sparkles, Wand2 } from "lucide-react";
 import { OptionCard } from "@/components/option-card";
 
 export default function HomePage() {
@@ -13,11 +13,11 @@ export default function HomePage() {
       href: "/create-video",
     },
     {
-      id: "my-videos",
-      icon: FolderOpen,
-      title: "My Videos",
-      description: "View and manage all your generated videos",
-      href: "/videos",
+      id: "mimic-video",
+      icon: Wand2,
+      title: "Mimic Videos",
+      description: "Upload viral videos and recreate them for your brand",
+      href: "/analyze",
     },
     {
       id: "templates",
@@ -25,13 +25,6 @@ export default function HomePage() {
       title: "Ad Templates",
       description: "Browse viral ad templates and recreate them",
       href: "/templates",
-    },
-    {
-      id: "projects",
-      icon: Calendar,
-      title: "Projects",
-      description: "Organize your videos into projects",
-      href: "/projects",
     },
   ];
 
@@ -48,7 +41,7 @@ export default function HomePage() {
       </div>
 
       {/* Options Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
         {options.map((option) => (
           <OptionCard
             key={option.id}
