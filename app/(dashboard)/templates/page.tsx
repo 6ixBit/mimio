@@ -74,6 +74,7 @@ const categories = [
   "Showcase",
   "Demo",
   "UGC",
+  "Memes",
 ];
 
 export default function TemplatesPage() {
@@ -305,6 +306,7 @@ export default function TemplatesPage() {
                         <SelectItem value="Showcase">Showcase</SelectItem>
                         <SelectItem value="Demo">Demo</SelectItem>
                         <SelectItem value="UGC">UGC</SelectItem>
+                        <SelectItem value="Memes">Memes</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

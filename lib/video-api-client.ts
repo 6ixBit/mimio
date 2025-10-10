@@ -25,12 +25,17 @@ export class VideoApiClient {
     size: string;
     seconds: string;
     imageReference?: File;
+    project_id?: string;
   }): Promise<VideoCreationResult> {
     const formData = new FormData();
     formData.append("prompt", params.prompt);
     formData.append("model", params.model);
     formData.append("size", params.size);
     formData.append("seconds", params.seconds);
+    
+    if (params.project_id) {
+      formData.append("project_id", params.project_id);
+    }
 
     if (params.imageReference) {
       // Ensure proper MIME type
@@ -84,6 +89,10 @@ export class VideoApiClient {
     formData.append("model", params.model || "sora-2");
     formData.append("size", params.size || "720x1280");
     formData.append("seconds", params.seconds || "8");
+    
+    if (params.project_id) {
+      formData.append("project_id", params.project_id);
+    }
 
     if (params.image_reference) {
       // Ensure proper MIME type

@@ -70,6 +70,7 @@ export interface VideoVariationsRequest {
   size?: string;
   seconds?: string;
   image_reference?: File;
+  project_id?: string;
 }
 
 // =====================================================

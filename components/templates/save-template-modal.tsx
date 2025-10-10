@@ -41,6 +41,7 @@ const VIDEO_TYPES = [
   "Showcase",
   "Demo",
   "UGC",
+  "Memes",
 ];
 
 export function SaveTemplateModal({

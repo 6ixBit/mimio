@@ -102,6 +102,7 @@ export function SingleVideoForm({
         size,
         seconds,
         imageReference: imageReference || undefined,
+        project_id: selectedProject || undefined,
       });
 
       // Update database with external video ID for polling

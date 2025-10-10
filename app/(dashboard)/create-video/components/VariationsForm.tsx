@@ -88,6 +88,7 @@ export function VariationsForm({
         size,
         seconds,
         image_reference: imageReference || undefined,
+        project_id: selectedProject || undefined,
       });
 
       // Create tracked videos for each variation

@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -21,6 +23,7 @@ import {
   ChevronRight,
   Check,
   X,
+  Film,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { getApiUrl, API_ENDPOINTS } from "@/lib/api-config";
@@ -62,6 +65,7 @@ export default function AnalyzeVideoPage() {
   const [productName, setProductName] = useState("");
   const [brandName, setBrandName] = useState("");
   const [customInstructions, setCustomInstructions] = useState("");
+  const [includeTranscript, setIncludeTranscript] = useState(true);
 
   // Drag and drop handler
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -100,6 +104,7 @@ export default function AnalyzeVideoPage() {
       const formData = new FormData();
 
       formData.append("video_file", selectedVideo);
+      formData.append("include_transcript", includeTranscript.toString());
 
       // Simulate progress
       const progressInterval = setInterval(() => {
@@ -314,6 +319,24 @@ Overall aesthetic: Premium commercial quality, modern and aspirational, fast-pac
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Include Transcript Option */}
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="include-transcript"
+                checked={includeTranscript}
+                onCheckedChange={(checked) =>
+                  setIncludeTranscript(checked === true)
+                }
+                disabled={isAnalyzing}
+              />
+              <Label
+                htmlFor="include-transcript"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Include audio transcript in generated prompt
+              </Label>
             </div>
 
             {/* Analysis Button */}
