@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
 import {
   ChevronRight,
   Home,
@@ -251,6 +252,29 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
         {/* Page Content */}
         <div className="flex-1 overflow-auto bg-background">{children}</div>
+
+        {/* Footer */}
+        <div className="border-t border-border bg-card px-6 py-3">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <div className="flex items-center gap-4">
+              <span>© 2024 Mimio. All rights reserved.</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <Link
+                href="/privacy"
+                className="hover:text-primary transition-colors"
+              >
+                Privacy Policy
+              </Link>
+              <Link
+                href="/terms"
+                className="hover:text-primary transition-colors"
+              >
+                Terms of Service
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
