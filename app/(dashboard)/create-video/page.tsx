@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,7 +16,7 @@ import { SingleVideoForm } from "./components/SingleVideoForm";
 import { VariationsForm } from "./components/VariationsForm";
 import { BatchVideoProgress } from "@/components/video-creation/BatchVideoProgress";
 
-export default function CreateVideoPage() {
+function CreateVideoContent() {
   const searchParams = useSearchParams();
   const { user } = useAuth();
 
@@ -341,5 +341,13 @@ export default function CreateVideoPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function CreateVideoPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <CreateVideoContent />
+    </Suspense>
   );
 }
