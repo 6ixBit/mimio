@@ -27,6 +27,7 @@ import {
 import { useAuth } from "@/lib/auth-context";
 import { videosApi, templatesApi } from "@/lib/supabase";
 import { SaveTemplateModal } from "@/components/templates/save-template-modal";
+import { ConfirmationModal } from "@/components/confirmation-modal";
 import { VideoApiClient } from "@/lib/video-api-client";
 
 interface VideoWithProject {
@@ -63,6 +64,9 @@ export default function VideosPage() {
     null
   );
   const [templateVideo, setTemplateVideo] = useState<VideoWithProject | null>(
+    null
+  );
+  const [videoToDelete, setVideoToDelete] = useState<VideoWithProject | null>(
     null
   );
 
@@ -186,12 +190,19 @@ export default function VideosPage() {
     }
   };
 
-  const handleDeleteVideo = async (videoId: string) => {
-    if (!confirm("Are you sure you want to delete this video?")) return;
+  const handleDeleteVideo = (videoId: string) => {
+    const video = videos.find((v) => v.id === videoId);
+    if (video) {
+      setVideoToDelete(video);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!videoToDelete) return;
 
     try {
-      await videosApi.delete(videoId);
-      setVideos(videos.filter((v) => v.id !== videoId));
+      await videosApi.delete(videoToDelete.id);
+      setVideos(videos.filter((v) => v.id !== videoToDelete.id));
     } catch (err) {
       console.error("Error deleting video:", err);
     }
@@ -462,10 +473,25 @@ export default function VideosPage() {
                       </DropdownMenu>
                     </>
                   ) : (
-                    <div className="flex-1 text-center py-2">
-                      <p className="text-xs text-muted-foreground">
-                        Video is being generated...
-                      </p>
+                    <div className="flex gap-2 pt-2">
+                      {video.status === "processing" && (
+                        <>
+                          <div className="flex-1 text-center py-2">
+                            <p className="text-xs text-muted-foreground">
+                              Video is being generated...
+                            </p>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="px-3 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
+                            onClick={() => handleDeleteVideo(video.id)}
+                            title="Cancel Generation"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
@@ -581,6 +607,29 @@ export default function VideosPage() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        open={!!videoToDelete}
+        onOpenChange={() => setVideoToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title={
+          videoToDelete?.status === "processing"
+            ? "Cancel Video Generation"
+            : "Delete Video"
+        }
+        description={
+          videoToDelete?.status === "processing"
+            ? "Are you sure you want to cancel this video generation? This action cannot be undone."
+            : "Are you sure you want to delete this video? This action cannot be undone."
+        }
+        confirmText={
+          videoToDelete?.status === "processing"
+            ? "Cancel Generation"
+            : "Delete"
+        }
+        variant="destructive"
+      />
     </div>
   );
 }

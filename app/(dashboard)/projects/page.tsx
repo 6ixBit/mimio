@@ -57,7 +57,9 @@ export default function ProjectsPage() {
 
       try {
         setLoading(true);
-        const { data, error } = await projectsApi.getAll(user.id);
+        const { data, error } = await projectsApi.getAllWithVideoCounts(
+          user.id
+        );
 
         if (error) throw error;
 
@@ -251,7 +253,10 @@ export default function ProjectsPage() {
                       <MoreVertical className="w-4 h-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="bg-card border-border">
+                  <DropdownMenuContent
+                    align="end"
+                    className="bg-card border-border"
+                  >
                     <DropdownMenuItem
                       onClick={() => setDeleteProjectId(project.id)}
                       className="text-red-600 focus:text-red-600 focus:bg-red-500/10 cursor-pointer"
@@ -271,6 +276,10 @@ export default function ProjectsPage() {
               )}
 
               <div className="space-y-2 text-xs text-muted-foreground mt-auto">
+                <div className="flex items-center gap-2">
+                  <Video className="w-3 h-3" />
+                  <span>{(project as any).videos?.[0]?.count || 0} videos</span>
+                </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="w-3 h-3" />
                   <span>Created: {formatDate(project.created_at)}</span>
@@ -337,9 +346,9 @@ export default function ProjectsPage() {
               Delete Project
             </AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground">
-              Are you sure you want to delete this project? This action cannot be
-              undone. All videos in this project will remain but will no longer
-              be associated with it.
+              Are you sure you want to delete this project? This action cannot
+              be undone. All videos in this project will remain but will no
+              longer be associated with it.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

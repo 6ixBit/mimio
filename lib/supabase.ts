@@ -40,6 +40,20 @@ export const projectsApi = {
       .order("created_at", { ascending: false });
   },
 
+  // Get all projects with video counts
+  getAllWithVideoCounts: async (userId: string) => {
+    return await supabase
+      .from("projects")
+      .select(
+        `
+        *,
+        videos:videos(count)
+      `
+      )
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+  },
+
   // Get a single project
   getById: async (id: string) => {
     return await supabase.from("projects").select("*").eq("id", id).single();

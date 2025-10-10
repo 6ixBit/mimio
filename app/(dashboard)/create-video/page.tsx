@@ -304,34 +304,36 @@ export default function CreateVideoPage() {
           onClick={handleClosePlayer}
         >
           <div
-            className="bg-card rounded-lg max-w-3xl w-full max-h-[85vh] overflow-hidden"
+            className="bg-card rounded-lg max-w-lg w-full max-h-[75vh] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between p-4 border-b border-border">
-              <h3 className="text-lg font-semibold text-foreground">
+            <div className="flex items-center justify-between p-3 border-b border-border">
+              <h3 className="text-base font-semibold text-foreground truncate mr-2">
                 {playingVideo.title}
               </h3>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleClosePlayer}
-                className="text-muted-foreground hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground flex-shrink-0"
               >
                 <X className="w-4 h-4" />
               </Button>
             </div>
-            <div className="p-4">
+            <div className="p-3">
               {playingVideo.videoUrl ? (
                 <video
                   src={playingVideo.videoUrl}
                   controls
-                  className="w-full h-auto max-h-[500px] rounded-lg"
+                  className="w-full h-auto max-h-[300px] rounded-lg"
                   autoPlay
                   controlsList="nodownload"
                 />
               ) : (
-                <div className="flex items-center justify-center h-64 bg-muted rounded-lg">
-                  <p className="text-muted-foreground">Video not available</p>
+                <div className="flex items-center justify-center h-48 bg-muted rounded-lg">
+                  <p className="text-muted-foreground text-sm">
+                    Video not available
+                  </p>
                 </div>
               )}
             </div>
