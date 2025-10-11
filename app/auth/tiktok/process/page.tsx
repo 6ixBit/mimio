@@ -12,9 +12,13 @@ function TikTokProcessContent() {
   const { user, loading } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [processing, setProcessing] = useState(true);
+  const [hasProcessed, setHasProcessed] = useState(false);
 
   useEffect(() => {
     async function processCallback() {
+      // Prevent duplicate processing
+      if (hasProcessed) return;
+
       // Wait for auth to load
       if (loading) return;
 
@@ -34,6 +38,9 @@ function TikTokProcessContent() {
         return;
       }
 
+      // Mark as processed to prevent duplicate runs
+      setHasProcessed(true);
+
       try {
         console.log("Processing TikTok OAuth for user:", user.id);
 
@@ -49,24 +56,18 @@ function TikTokProcessContent() {
 
         console.log("Exchanging code for access token...");
 
-        // Exchange code for access token
-        const tokenResponse = await fetch(
-          "https://open.tiktokapis.com/v2/oauth/token/",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/x-www-form-urlencoded",
-            },
-            body: new URLSearchParams({
-              client_key: process.env.NEXT_PUBLIC_TIKTOK_CLIENT_KEY!,
-              client_secret: process.env.TIKTOK_CLIENT_SECRET!,
-              code: code,
-              grant_type: "authorization_code",
-              redirect_uri: process.env.NEXT_PUBLIC_TIKTOK_REDIRECT_URI!,
-              code_verifier: codeVerifier,
-            }),
-          }
-        );
+        // Call our server-side API to exchange the code for tokens
+        // This keeps the client_secret secure on the server
+        const tokenResponse = await fetch("/api/auth/tiktok/exchange", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            code: code,
+            code_verifier: codeVerifier,
+          }),
+        });
 
         if (!tokenResponse.ok) {
           const errorData = await tokenResponse.json();
@@ -79,10 +80,24 @@ function TikTokProcessContent() {
         }
 
         const tokenData = await tokenResponse.json();
-        console.log("✅ Access token received");
-        console.log("Token data:", tokenData);
+        console.log("Token response data:", tokenData);
+
+        // Check if token exchange returned an error
+        if (tokenData.error) {
+          throw new Error(
+            `Token exchange failed: ${tokenData.error} - ${
+              tokenData.error_description || "Unknown error"
+            }`
+          );
+        }
 
         const { access_token, refresh_token, expires_in, open_id } = tokenData;
+
+        if (!access_token || !open_id) {
+          throw new Error("Token response missing required fields");
+        }
+
+        console.log("✅ Access token received for open_id:", open_id);
 
         // Try to get user info (optional - if it fails, we'll use basic info)
         let userInfo: any = {};
