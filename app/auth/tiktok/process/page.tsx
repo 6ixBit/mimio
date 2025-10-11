@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { socialMediaApi } from "@/lib/supabase";
 import { Loader2 } from "lucide-react";
 
-export default function TikTokProcessPage() {
+function TikTokProcessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading } = useAuth();
@@ -71,7 +71,11 @@ export default function TikTokProcessPage() {
         if (!tokenResponse.ok) {
           const errorData = await tokenResponse.json();
           console.error("Token exchange error:", errorData);
-          throw new Error(`Token exchange failed: ${errorData.error_description || "Unknown error"}`);
+          throw new Error(
+            `Token exchange failed: ${
+              errorData.error_description || "Unknown error"
+            }`
+          );
         }
 
         const tokenData = await tokenResponse.json();
@@ -182,3 +186,26 @@ export default function TikTokProcessPage() {
   );
 }
 
+export default function TikTokProcessPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background flex items-center justify-center p-4">
+          <div className="max-w-md w-full space-y-6 text-center">
+            <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto" />
+            <div>
+              <h2 className="text-2xl font-bold text-foreground mb-2">
+                Loading...
+              </h2>
+              <p className="text-muted-foreground">
+                Please wait while we prepare your connection...
+              </p>
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <TikTokProcessContent />
+    </Suspense>
+  );
+}
