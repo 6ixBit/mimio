@@ -57,8 +57,9 @@ export async function GET(request: NextRequest) {
     maxAge: 600, // 10 minutes
   });
 
+  // Note: httpOnly is false so client-side can read it for PKCE verification
   response.cookies.set("tiktok_code_verifier", codeVerifier, {
-    httpOnly: true,
+    httpOnly: false,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     maxAge: 600, // 10 minutes
