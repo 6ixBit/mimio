@@ -80,27 +80,44 @@ function TikTokProcessContent() {
 
         const tokenData = await tokenResponse.json();
         console.log("✅ Access token received");
+        console.log("Token data:", tokenData);
 
         const { access_token, refresh_token, expires_in, open_id } = tokenData;
 
-        // Get user info
-        console.log("Fetching TikTok user info...");
-        const userResponse = await fetch(
-          "https://open.tiktokapis.com/v2/user/info/?fields=open_id,union_id,avatar_url,display_name",
-          {
-            headers: {
-              Authorization: `Bearer ${access_token}`,
-            },
+        // Try to get user info (optional - if it fails, we'll use basic info)
+        let userInfo: any = {};
+        try {
+          console.log("Fetching TikTok user info...");
+          const userResponse = await fetch(
+            "https://open.tiktokapis.com/v2/user/info/?fields=open_id,union_id,avatar_url,display_name",
+            {
+              headers: {
+                Authorization: `Bearer ${access_token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          if (userResponse.ok) {
+            const userData = await userResponse.json();
+            userInfo = userData.data?.user || {};
+            console.log("✅ User info received:", userInfo.display_name);
+          } else {
+            const errorData = await userResponse.json().catch(() => ({}));
+            console.warn(
+              "⚠️ Could not fetch user profile (non-critical):",
+              userResponse.status,
+              errorData
+            );
+            console.log("Continuing with basic info from token response...");
           }
-        );
-
-        if (!userResponse.ok) {
-          throw new Error("Failed to fetch user profile");
+        } catch (userInfoError) {
+          console.warn(
+            "⚠️ User info fetch failed (non-critical):",
+            userInfoError
+          );
+          console.log("Continuing with basic info from token response...");
         }
-
-        const userData = await userResponse.json();
-        const userInfo = userData.data?.user || {};
-        console.log("✅ User info received:", userInfo.display_name);
 
         // Save to database
         console.log("Saving to database...");
