@@ -1,15 +1,45 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles, Zap, TrendingUp } from "lucide-react";
+import {
+  ArrowRight,
+  Sparkles,
+  Zap,
+  TrendingUp,
+  Crown,
+  Rocket,
+  CheckCircle,
+} from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { getSubscriptionPlans, formatPrice, getStripe } from "@/lib/stripe";
 
 export default function LandingPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const [pricingLoading, setPricingLoading] = useState(false);
+
+  const handleGetStarted = async (planName?: string) => {
+    if (planName && planName !== "free") {
+      // Handle paid plan signup with Stripe
+      setPricingLoading(true);
+      try {
+        // Redirect to signup first, then to checkout
+        router.push(`/signup?plan=${planName}`);
+      } catch (error) {
+        console.error("Error:", error);
+      } finally {
+        setPricingLoading(false);
+      }
+    } else {
+      // Handle free signup
+      router.push("/signup");
+    }
+  };
 
   // Redirect logged-in users to the app
   useEffect(() => {
@@ -83,12 +113,14 @@ export default function LandingPage() {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-            <Link href="/signup">
-              <Button size="lg" className="w-full sm:w-auto gap-2 text-base">
-                Start Creating Free
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-            </Link>
+            <Button
+              size="lg"
+              className="w-full sm:w-auto gap-2 text-base"
+              onClick={() => handleGetStarted()}
+            >
+              Start Creating Free
+              <ArrowRight className="w-4 h-4" />
+            </Button>
             <Link href="/login">
               <Button
                 size="lg"
@@ -157,6 +189,26 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Pricing Section */}
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 pb-24">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
+              Simple, Transparent Pricing
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Choose the perfect plan for your content creation needs. Start
+              free, upgrade when you're ready to scale.
+            </p>
+          </div>
+
+          <PricingCards
+            onGetStarted={handleGetStarted}
+            loading={pricingLoading}
+          />
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="container mx-auto px-4 sm:px-6 lg:px-8 pb-24">
         <div className="max-w-4xl mx-auto">
@@ -168,12 +220,14 @@ export default function LandingPage() {
               Join marketers who are already leveraging viral formats to grow
               their reach on TikTok.
             </p>
-            <Link href="/signup">
-              <Button size="lg" className="gap-2 text-base">
-                Get Started Free
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-            </Link>
+            <Button
+              size="lg"
+              className="gap-2 text-base"
+              onClick={() => handleGetStarted()}
+            >
+              Get Started Free
+              <ArrowRight className="w-4 h-4" />
+            </Button>
           </div>
         </div>
       </section>
@@ -205,6 +259,130 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+    </div>
+  );
+}
+
+function PricingCards({
+  onGetStarted,
+  loading,
+}: {
+  onGetStarted: (plan?: string) => void;
+  loading: boolean;
+}) {
+  const SUBSCRIPTION_PLANS = getSubscriptionPlans();
+
+  const plans = [
+    {
+      ...SUBSCRIPTION_PLANS.free,
+      icon: <CheckCircle className="w-6 h-6 text-green-500" />,
+      popular: false,
+      description: "Perfect for getting started",
+      features: [
+        "3 video generations/month",
+        "Basic templates",
+        "Community support",
+        "Standard processing",
+      ],
+      buttonText: "Start Free",
+      buttonVariant: "outline" as const,
+    },
+    {
+      ...SUBSCRIPTION_PLANS.starter,
+      icon: <Zap className="w-6 h-6 text-blue-500" />,
+      popular: false,
+      description: "Great for small creators",
+      features: [
+        "25 video generations/month",
+        "All templates",
+        "Email support",
+        "Standard processing",
+      ],
+      buttonText: "Get Starter",
+      buttonVariant: "outline" as const,
+    },
+    {
+      ...SUBSCRIPTION_PLANS.scaler,
+      icon: <Crown className="w-6 h-6 text-purple-500" />,
+      popular: true,
+      description: "Most popular for growing creators",
+      features: [
+        "100 video generations/month",
+        "No watermarks",
+        "Priority processing",
+        "Sora 2 Pro access",
+        "Advanced analytics",
+      ],
+      buttonText: "Get Scaler",
+      buttonVariant: "default" as const,
+    },
+    {
+      ...SUBSCRIPTION_PLANS.pro,
+      icon: <Rocket className="w-6 h-6 text-orange-500" />,
+      popular: false,
+      description: "For professional teams",
+      features: [
+        "Unlimited generations",
+        "API access",
+        "White-label options",
+        "Custom templates",
+        "Dedicated support",
+      ],
+      buttonText: "Get Pro",
+      buttonVariant: "outline" as const,
+    },
+  ];
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {plans.map((plan) => (
+        <Card
+          key={plan.name}
+          className={`relative ${
+            plan.popular ? "ring-2 ring-primary scale-105" : ""
+          }`}
+        >
+          {plan.popular && (
+            <Badge className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-primary">
+              Most Popular
+            </Badge>
+          )}
+
+          <CardHeader className="text-center pb-4">
+            <div className="flex justify-center mb-2">{plan.icon}</div>
+            <CardTitle className="text-xl">{plan.displayName}</CardTitle>
+            <p className="text-sm text-muted-foreground">{plan.description}</p>
+            <div className="mt-4">
+              <span className="text-3xl font-bold">
+                {plan.price === 0 ? "Free" : formatPrice(plan.price)}
+              </span>
+              {plan.price > 0 && (
+                <span className="text-muted-foreground">/month</span>
+              )}
+            </div>
+          </CardHeader>
+
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              {plan.features.map((feature, index) => (
+                <div key={index} className="flex items-center gap-2 text-sm">
+                  <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                  <span>{feature}</span>
+                </div>
+              ))}
+            </div>
+
+            <Button
+              className="w-full"
+              onClick={() => onGetStarted(plan.name)}
+              disabled={loading}
+              variant={plan.buttonVariant}
+            >
+              {loading ? "Processing..." : plan.buttonText}
+            </Button>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }
