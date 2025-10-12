@@ -17,6 +17,7 @@ import {
   Eye,
   Trash2,
   X,
+  Share2,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -28,6 +29,7 @@ import { useAuth } from "@/lib/auth-context";
 import { projectsApi, videosApi } from "@/lib/supabase";
 import { Project, Video as VideoType } from "@/lib/database.types";
 import { ConfirmationModal } from "@/components/confirmation-modal";
+import { PostToSocialModal } from "@/components/post-to-social-modal";
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -40,6 +42,7 @@ export default function ProjectDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [videoToDelete, setVideoToDelete] = useState<VideoType | null>(null);
+  const [videoToPost, setVideoToPost] = useState<VideoType | null>(null);
 
   // Fetch project and videos
   useEffect(() => {
@@ -363,12 +366,22 @@ export default function ProjectDetailPage() {
                             size="sm"
                             variant="outline"
                             className="flex-1 border-border text-xs"
+                            onClick={() => setVideoToPost(video)}
+                            title="Share to Social Media"
+                          >
+                            <Share2 className="w-3 h-3 mr-1" />
+                            Share
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="px-3 border-border"
                             onClick={() =>
                               handleDownload(video.video_url, video.title)
                             }
+                            title="Download"
                           >
-                            <Download className="w-3 h-3 mr-1" />
-                            Download
+                            <Download className="w-4 h-4" />
                           </Button>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -486,6 +499,19 @@ export default function ProjectDetailPage() {
         }
         variant="destructive"
       />
+
+      {/* Post to Social Modal */}
+      {videoToPost && (
+        <PostToSocialModal
+          isOpen={!!videoToPost}
+          onClose={() => setVideoToPost(null)}
+          video={{
+            id: videoToPost.id,
+            title: videoToPost.title,
+            video_url: videoToPost.video_url,
+          }}
+        />
+      )}
     </div>
   );
 }

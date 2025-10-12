@@ -104,7 +104,7 @@ function TikTokProcessContent() {
         try {
           console.log("Fetching TikTok user info...");
           const userResponse = await fetch(
-            "https://open.tiktokapis.com/v2/user/info/?fields=open_id,union_id,avatar_url,display_name",
+            "https://open.tiktokapis.com/v2/user/info/?fields=open_id,union_id,avatar_url,display_name,username,profile_deep_link",
             {
               headers: {
                 Authorization: `Bearer ${access_token}`,
@@ -116,7 +116,11 @@ function TikTokProcessContent() {
           if (userResponse.ok) {
             const userData = await userResponse.json();
             userInfo = userData.data?.user || {};
-            console.log("✅ User info received:", userInfo.display_name);
+            console.log(
+              "✅ User info received:",
+              userInfo.display_name,
+              userInfo.username ? `(@${userInfo.username})` : ""
+            );
           } else {
             const errorData = await userResponse.json().catch(() => ({}));
             console.warn(
@@ -139,7 +143,10 @@ function TikTokProcessContent() {
         const { error: dbError } = await socialMediaApi.create(user.id, {
           platform: "tiktok",
           platform_user_id: open_id,
-          username: userInfo.display_name || `user_${open_id.substring(0, 8)}`,
+          username:
+            userInfo.username ||
+            userInfo.display_name ||
+            `user_${open_id.substring(0, 8)}`,
           display_name: userInfo.display_name,
           profile_picture_url: userInfo.avatar_url,
           access_token: access_token,

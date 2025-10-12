@@ -23,12 +23,14 @@ import {
   Trash2,
   X,
   Sparkles,
+  Share2,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { videosApi, templatesApi } from "@/lib/supabase";
 import { SaveTemplateModal } from "@/components/templates/save-template-modal";
 import { ConfirmationModal } from "@/components/confirmation-modal";
 import { VideoApiClient } from "@/lib/video-api-client";
+import { PostToSocialModal } from "@/components/post-to-social-modal";
 
 interface VideoWithProject {
   id: string;
@@ -69,6 +71,7 @@ export default function VideosPage() {
   const [videoToDelete, setVideoToDelete] = useState<VideoWithProject | null>(
     null
   );
+  const [videoToPost, setVideoToPost] = useState<VideoWithProject | null>(null);
 
   // Fetch videos from database
   useEffect(() => {
@@ -441,6 +444,15 @@ export default function VideosPage() {
                         size="sm"
                         variant="outline"
                         className="px-3 border-border"
+                        onClick={() => setVideoToPost(video)}
+                        title="Share to Social Media"
+                      >
+                        <Share2 className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="px-3 border-border"
                         onClick={() =>
                           handleDownload(video.video_url, video.title)
                         }
@@ -630,6 +642,19 @@ export default function VideosPage() {
         }
         variant="destructive"
       />
+
+      {/* Post to Social Modal */}
+      {videoToPost && (
+        <PostToSocialModal
+          isOpen={!!videoToPost}
+          onClose={() => setVideoToPost(null)}
+          video={{
+            id: videoToPost.id,
+            title: videoToPost.title,
+            video_url: videoToPost.video_url,
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
   );
   authUrl.searchParams.set(
     "scope",
-    "user.info.basic,video.upload,video.publish"
+    "user.info.basic,user.info.profile,video.upload,video.publish"
   );
   authUrl.searchParams.set("response_type", "code");
   authUrl.searchParams.set(
