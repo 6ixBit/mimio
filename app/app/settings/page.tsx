@@ -106,6 +106,7 @@ export default function SettingsPage() {
     platform: "tiktok" | "instagram",
     username: string
   ) => {
+    console.log("Disconnect clicked for:", { accountId, platform, username });
     setAccountToDisconnect({ id: accountId, platform, username });
   };
 
@@ -452,8 +453,10 @@ export default function SettingsPage() {
 
       {/* Confirmation Modal for Account Disconnection */}
       <ConfirmationModal
-        isOpen={accountToDisconnect !== null}
-        onClose={() => setAccountToDisconnect(null)}
+        open={accountToDisconnect !== null}
+        onOpenChange={(open) => {
+          if (!open) setAccountToDisconnect(null);
+        }}
         onConfirm={confirmDisconnectAccount}
         title="Disconnect Account"
         description={
