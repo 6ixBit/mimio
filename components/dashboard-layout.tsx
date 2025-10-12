@@ -31,13 +31,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   // Determine active section from pathname
   const getActiveSection = () => {
-    if (pathname === "/") return "home";
-    if (pathname.startsWith("/videos")) return "videos";
-    if (pathname.startsWith("/projects")) return "projects";
-    if (pathname.startsWith("/templates")) return "templates";
-    if (pathname.startsWith("/analyze")) return "analyze";
-    if (pathname.startsWith("/settings")) return "settings";
-    if (pathname.startsWith("/create-video")) return "home";
+    if (pathname === "/app" || pathname === "/app/") return "home";
+    if (pathname.startsWith("/app/videos")) return "videos";
+    if (pathname.startsWith("/app/projects")) return "projects";
+    if (pathname.startsWith("/app/templates")) return "templates";
+    if (pathname.startsWith("/app/analyze")) return "analyze";
+    if (pathname.startsWith("/app/settings")) return "settings";
+    if (pathname.startsWith("/app/create-video")) return "home";
     return "home";
   };
 
@@ -49,13 +49,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   // Get page title from pathname
   const getPageTitle = () => {
-    if (pathname === "/") return "Home";
-    if (pathname === "/videos") return "Videos";
-    if (pathname === "/projects") return "Projects";
-    if (pathname === "/templates") return "Templates";
-    if (pathname === "/analyze") return "Mimic Video";
-    if (pathname === "/settings") return "Settings";
-    if (pathname === "/create-video") return "Create Videos";
+    if (pathname === "/app" || pathname === "/app/") return "Home";
+    if (pathname === "/app/videos") return "Videos";
+    if (pathname === "/app/projects") return "Projects";
+    if (pathname === "/app/templates") return "Templates";
+    if (pathname === "/app/analyze") return "Mimic Video";
+    if (pathname === "/app/settings") return "Settings";
+    if (pathname === "/app/create-video") return "Create Videos";
     return "Mimio";
   };
 
@@ -95,36 +95,36 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
           <nav className="space-y-2 flex-1">
             {[
-              { id: "home", icon: Home, label: "HOME", path: "/" },
+              { id: "home", icon: Home, label: "HOME", path: "/app" },
               {
                 id: "templates",
                 icon: Sparkles,
                 label: "AD TEMPLATES",
-                path: "/templates",
+                path: "/app/templates",
               },
               {
                 id: "analyze",
                 icon: Wand2,
                 label: "MIMIC VIDEO",
-                path: "/analyze",
+                path: "/app/analyze",
               },
               {
                 id: "videos",
                 icon: Video,
                 label: "MY VIDEOS",
-                path: "/videos",
+                path: "/app/videos",
               },
               {
                 id: "projects",
                 icon: FolderKanban,
                 label: "PROJECTS",
-                path: "/projects",
+                path: "/app/projects",
               },
               {
                 id: "settings",
                 icon: Settings,
                 label: "SETTINGS",
-                path: "/settings",
+                path: "/app/settings",
               },
             ].map((item) => (
               <button

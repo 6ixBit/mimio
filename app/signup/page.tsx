@@ -43,7 +43,7 @@ export default function SignUpPage() {
       setSuccess(true);
       // Redirect after a short delay to show success message
       setTimeout(() => {
-        router.push("/");
+        router.push("/app");
       }, 2000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to sign up");
@@ -252,4 +252,3 @@ export default function SignUpPage() {
     </div>
   );
 }
-

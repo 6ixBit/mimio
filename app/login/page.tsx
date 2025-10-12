@@ -24,7 +24,7 @@ export default function LoginPage() {
 
     try {
       await auth.signIn(email, password);
-      router.push("/"); // Redirect to home after successful login
+      router.push("/app"); // Redirect to app after successful login
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to sign in");
     } finally {
@@ -203,4 +203,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
