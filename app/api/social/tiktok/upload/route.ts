@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { socialMediaApi } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
 
 export async function POST(request: NextRequest) {
   try {
     const { video_url, caption, account_id, post_id, user_id } =
       await request.json();
+
+    console.log("TikTok Upload Request:", {
+      video_url,
+      account_id,
+      post_id,
+      user_id,
+    });
 
     if (!video_url || !account_id || !post_id || !user_id) {
       return NextResponse.json(
@@ -13,18 +20,50 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get the social media account to retrieve access token
-    const { data: accounts, error: accountError } = await socialMediaApi.getAll(
-      user_id
+    // Create Supabase client with service role for server-side operations
+    // This bypasses RLS policies to access the data directly
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY ||
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
 
-    if (accountError) throw accountError;
+    // Get the social media account to retrieve access token
+    console.log("Fetching accounts for user:", user_id);
+    const { data: accounts, error: accountError } = await supabase
+      .from("social_media_accounts")
+      .select("*")
+      .eq("user_id", user_id);
+
+    if (accountError) {
+      console.error("Error fetching accounts:", accountError);
+      throw accountError;
+    }
+
+    console.log("Found accounts:", accounts?.length || 0);
+
+    if (accounts && accounts.length > 0) {
+      console.log(
+        "Account IDs:",
+        accounts.map((acc: any) => acc.id)
+      );
+    }
 
     const account: any = accounts?.find((acc: any) => acc.id === account_id);
 
+    console.log("Looking for account_id:", account_id);
+    console.log("Matched account:", account ? "Found" : "Not found");
+
     if (!account) {
       return NextResponse.json(
-        { error: "Social media account not found" },
+        {
+          error: "Social media account not found",
+          debug: {
+            account_id_received: account_id,
+            available_account_ids: accounts?.map((acc: any) => acc.id) || [],
+            user_id: user_id,
+          },
+        },
         { status: 404 }
       );
     }

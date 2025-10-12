@@ -129,6 +129,13 @@ export function PostToSocialModal({
 
       // Upload to the platform
       if (selectedAccount.platform === "tiktok") {
+        console.log("Uploading to TikTok:", {
+          user_id: user.id,
+          video_url: video.video_url,
+          account_id: selectedAccountId,
+          account: selectedAccount,
+        });
+
         const response = await fetch("/api/social/tiktok/upload", {
           method: "POST",
           headers: {
