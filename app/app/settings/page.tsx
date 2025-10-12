@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { socialMediaApi } from "@/lib/supabase";
+import { ConfirmationModal } from "@/components/confirmation-modal";
 
 // Mock subscription type - will be replaced with real data later
 const MOCK_SUBSCRIPTION = "Free"; // "Free" or "Pro"
@@ -53,6 +54,13 @@ export default function SettingsPage() {
     SocialMediaAccount[]
   >([]);
   const [loading, setLoading] = useState(true);
+
+  // Modal state for account disconnection
+  const [accountToDisconnect, setAccountToDisconnect] = useState<{
+    id: string;
+    platform: "tiktok" | "instagram";
+    username: string;
+  } | null>(null);
 
   // Fetch connected accounts on mount
   useEffect(() => {
@@ -93,26 +101,35 @@ export default function SettingsPage() {
     window.location.href = "/api/auth/tiktok/connect";
   };
 
-  const handleDisconnectAccount = async (
+  const handleDisconnectAccount = (
     accountId: string,
-    platform: "tiktok" | "instagram"
+    platform: "tiktok" | "instagram",
+    username: string
   ) => {
-    if (!confirm("Are you sure you want to disconnect this account?")) return;
+    setAccountToDisconnect({ id: accountId, platform, username });
+  };
+
+  const confirmDisconnectAccount = async () => {
+    if (!accountToDisconnect) return;
 
     try {
-      await socialMediaApi.delete(accountId);
+      await socialMediaApi.delete(accountToDisconnect.id);
 
       // Update local state
-      if (platform === "tiktok") {
-        setTiktokAccounts(tiktokAccounts.filter((acc) => acc.id !== accountId));
+      if (accountToDisconnect.platform === "tiktok") {
+        setTiktokAccounts(
+          tiktokAccounts.filter((acc) => acc.id !== accountToDisconnect.id)
+        );
       } else {
         setInstagramAccounts(
-          instagramAccounts.filter((acc) => acc.id !== accountId)
+          instagramAccounts.filter((acc) => acc.id !== accountToDisconnect.id)
         );
       }
+
+      setAccountToDisconnect(null);
     } catch (err) {
       console.error("Error disconnecting account:", err);
-      alert("Failed to disconnect account");
+      // Keep modal open and show error - you could add error state here if needed
     }
   };
 
@@ -317,7 +334,11 @@ export default function SettingsPage() {
                             size="icon"
                             className="h-8 w-8 text-muted-foreground hover:text-red-600 hover:bg-red-50"
                             onClick={() =>
-                              handleDisconnectAccount(account.id, "tiktok")
+                              handleDisconnectAccount(
+                                account.id,
+                                "tiktok",
+                                account.username
+                              )
                             }
                           >
                             <Trash2 className="w-4 h-4" />
@@ -397,7 +418,11 @@ export default function SettingsPage() {
                             size="icon"
                             className="h-8 w-8 text-muted-foreground hover:text-red-600 hover:bg-red-50"
                             onClick={() =>
-                              handleDisconnectAccount(account.id, "instagram")
+                              handleDisconnectAccount(
+                                account.id,
+                                "instagram",
+                                account.username
+                              )
                             }
                           >
                             <Trash2 className="w-4 h-4" />
@@ -424,6 +449,22 @@ export default function SettingsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Confirmation Modal for Account Disconnection */}
+      <ConfirmationModal
+        isOpen={accountToDisconnect !== null}
+        onClose={() => setAccountToDisconnect(null)}
+        onConfirm={confirmDisconnectAccount}
+        title="Disconnect Account"
+        description={
+          accountToDisconnect
+            ? `Are you sure you want to disconnect @${accountToDisconnect.username} from ${accountToDisconnect.platform}? This action cannot be undone.`
+            : ""
+        }
+        confirmText="Disconnect"
+        cancelText="Cancel"
+        variant="destructive"
+      />
     </div>
   );
 }

@@ -11,21 +11,21 @@ export default function HomePage() {
       icon: Video,
       title: "Create Videos",
       description: "Generate single videos, variations, or batches with AI",
-      href: "/create-video",
+      href: "/app/create-video",
     },
     {
       id: "mimic-video",
       icon: Wand2,
       title: "Mimic Videos",
       description: "Upload viral videos and recreate them for your brand",
-      href: "/analyze",
+      href: "/app/analyze",
     },
     {
       id: "templates",
       icon: Sparkles,
       title: "Ad Templates",
       description: "Browse viral ad templates and recreate them",
-      href: "/templates",
+      href: "/app/templates",
     },
   ];
 

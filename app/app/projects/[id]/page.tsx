@@ -462,7 +462,7 @@ export default function ProjectDetailPage() {
                 Create your first video for this project
               </p>
               <Button
-                onClick={() => router.push("/create-video")}
+                onClick={() => router.push("/app/create-video")}
                 className="bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 <Play className="w-4 h-4 mr-2" />

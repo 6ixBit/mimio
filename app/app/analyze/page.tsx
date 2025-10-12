@@ -220,7 +220,7 @@ Overall aesthetic: Premium commercial quality, modern and aspirational, fast-pac
       size: "720x1280",
       seconds: "8",
     });
-    router.push(`/create-video?${params.toString()}`);
+    router.push(`/app/create-video?${params.toString()}`);
   };
 
   const handleReset = () => {

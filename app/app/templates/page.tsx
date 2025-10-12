@@ -161,7 +161,7 @@ export default function TemplatesPage() {
       seconds: template.duration_seconds.toString(),
       template_id: template.id, // Pass template ID to link the created video
     });
-    router.push(`/create-video?${params.toString()}`);
+    router.push(`/app/create-video?${params.toString()}`);
   };
 
   const handleViewOriginal = (url: string) => {

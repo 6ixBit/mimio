@@ -262,7 +262,7 @@ export default function VideosPage() {
       size: video.size,
       seconds: video.duration_seconds?.toString() || "8",
     });
-    router.push(`/create-video?${params.toString()}`);
+    router.push(`/app/create-video?${params.toString()}`);
   };
 
   // Loading state

@@ -34,7 +34,10 @@ function TikTokProcessContent() {
 
       if (!code) {
         setError("No authorization code received");
-        setTimeout(() => router.push("/settings?error=tiktok_no_code"), 2000);
+        setTimeout(
+          () => router.push("/app/settings?error=tiktok_no_code"),
+          2000
+        );
         return;
       }
 
@@ -168,13 +171,13 @@ function TikTokProcessContent() {
           "tiktok_code_verifier=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC";
 
         // Redirect to settings with success message
-        router.push("/settings?success=tiktok_connected");
+        router.push("/app/settings?success=tiktok_connected");
       } catch (err) {
         console.error("TikTok OAuth processing error:", err);
         setError(err instanceof Error ? err.message : "Unknown error");
         setTimeout(() => {
           router.push(
-            `/settings?error=tiktok_processing_failed&message=${encodeURIComponent(
+            `/app/settings?error=tiktok_processing_failed&message=${encodeURIComponent(
               err instanceof Error ? err.message : "Unknown error"
             )}`
           );
