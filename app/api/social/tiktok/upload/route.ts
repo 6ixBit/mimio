@@ -75,9 +75,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Step 1: Initialize the upload (using INBOX for draft mode)
-    // Note: This sends the video to user's inbox for them to review and post
-    console.log("Initializing TikTok upload to inbox...");
+    // Step 1: Download the video from Supabase
+    console.log("Downloading video from:", video_url);
+    const videoResponse = await fetch(video_url);
+
+    if (!videoResponse.ok) {
+      throw new Error("Failed to download video from storage");
+    }
+
+    const videoBlob = await videoResponse.blob();
+    const videoSize = videoBlob.size;
+
+    console.log("Video downloaded, size:", videoSize, "bytes");
+
+    // Step 2: Initialize the upload (using FILE_UPLOAD for inbox/draft mode)
+    console.log("Initializing TikTok file upload...");
     const initResponse = await fetch(
       "https://open.tiktokapis.com/v2/post/publish/inbox/video/init/",
       {
@@ -88,8 +100,10 @@ export async function POST(request: NextRequest) {
         },
         body: JSON.stringify({
           source_info: {
-            source: "PULL_FROM_URL",
-            video_url: video_url,
+            source: "FILE_UPLOAD",
+            video_size: videoSize,
+            chunk_size: videoSize, // Upload in one chunk
+            total_chunk_count: 1,
           },
         }),
       }
@@ -114,7 +128,38 @@ export async function POST(request: NextRequest) {
 
     console.log("✅ TikTok upload initialized:", initData.data?.publish_id);
 
-    // TikTok will pull the video from the URL and send it to user's inbox
+    // Step 3: Upload the video file to TikTok's upload URL
+    const uploadUrl = initData.data?.upload_url;
+
+    if (!uploadUrl) {
+      throw new Error("No upload URL received from TikTok");
+    }
+
+    console.log("Uploading video to TikTok...");
+
+    // Convert blob to buffer for upload
+    const videoBuffer = await videoBlob.arrayBuffer();
+
+    const uploadResponse = await fetch(uploadUrl, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "video/mp4",
+        "Content-Range": `bytes 0-${videoSize - 1}/${videoSize}`,
+      },
+      body: videoBuffer,
+    });
+
+    if (!uploadResponse.ok) {
+      const uploadError = await uploadResponse.text();
+      console.error("TikTok upload error:", uploadError);
+      throw new Error(
+        `Failed to upload video to TikTok: ${uploadResponse.status}`
+      );
+    }
+
+    console.log("✅ Video uploaded successfully to TikTok");
+
+    // TikTok will process the video and send it to user's inbox
     // User will get a notification to review and post the video
     return NextResponse.json({
       success: true,
