@@ -4,17 +4,18 @@ import { loadStripe } from "@stripe/stripe-js";
 // Server-side Stripe instance - only create when needed
 export const getStripeServer = () => {
   if (!process.env.STRIPE_SECRET_KEY) {
-    throw new Error('STRIPE_SECRET_KEY is not defined');
+    throw new Error("STRIPE_SECRET_KEY is not defined");
   }
   return new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: "2024-12-18.acacia",
+    apiVersion: "2024-06-20",
   });
 };
 
 // For backward compatibility
-export const stripe = typeof process !== 'undefined' && process.env.STRIPE_SECRET_KEY 
-  ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2024-12-18.acacia" })
-  : null;
+export const stripe =
+  typeof process !== "undefined" && process.env.STRIPE_SECRET_KEY
+    ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2024-06-20" })
+    : null;
 
 // Client-side Stripe instance
 export const getStripe = () => {
@@ -87,7 +88,10 @@ export const getSubscriptionPlans = () => ({
 });
 
 // Static version for client-side usage
-export const SUBSCRIPTION_PLANS = typeof window !== 'undefined' ? getSubscriptionPlans() : {} as ReturnType<typeof getSubscriptionPlans>;
+export const SUBSCRIPTION_PLANS =
+  typeof window !== "undefined"
+    ? getSubscriptionPlans()
+    : ({} as ReturnType<typeof getSubscriptionPlans>);
 
 export type SubscriptionPlan = keyof typeof SUBSCRIPTION_PLANS;
 
