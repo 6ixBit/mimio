@@ -26,6 +26,8 @@ import {
 import { useAuth } from "@/lib/auth-context";
 import { socialMediaApi } from "@/lib/supabase";
 import { ConfirmationModal } from "@/components/confirmation-modal";
+import { PricingPlans } from "@/components/pricing-plans";
+import { getStripe } from "@/lib/stripe";
 
 // Mock subscription type - will be replaced with real data later
 const MOCK_SUBSCRIPTION = "Free"; // "Free" or "Pro"
@@ -42,9 +44,8 @@ interface SocialMediaAccount {
 
 export default function SettingsPage() {
   const { user } = useAuth();
-  const [subscriptionType, setSubscriptionType] = useState<"Free" | "Pro">(
-    MOCK_SUBSCRIPTION
-  );
+  const [subscriptionType, setSubscriptionType] = useState<string>("free");
+  const [subscriptionLoading, setSubscriptionLoading] = useState(false);
 
   // Real social media accounts from database
   const [tiktokAccounts, setTiktokAccounts] = useState<SocialMediaAccount[]>(
@@ -139,9 +140,59 @@ export default function SettingsPage() {
     window.location.href = "/api/auth/instagram/connect";
   };
 
-  const handleUpgrade = () => {
-    // TODO: Implement upgrade flow (Stripe/payment)
-    console.log("Upgrade to Pro");
+  const handleUpgrade = async (planName: string) => {
+    if (!user) return;
+
+    setSubscriptionLoading(true);
+    try {
+      const response = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          planName,
+          userId: user.id,
+        }),
+      });
+
+      const { sessionId, url } = await response.json();
+
+      if (url) {
+        window.location.href = url;
+      } else if (sessionId) {
+        const stripe = await getStripe();
+        await stripe?.redirectToCheckout({ sessionId });
+      }
+    } catch (error) {
+      console.error("Error creating checkout session:", error);
+    } finally {
+      setSubscriptionLoading(false);
+    }
+  };
+
+  const handleManageSubscription = async () => {
+    if (!user) return;
+
+    try {
+      const response = await fetch("/api/stripe/portal", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: user.id,
+        }),
+      });
+
+      const { url } = await response.json();
+
+      if (url) {
+        window.location.href = url;
+      }
+    } catch (error) {
+      console.error("Error opening customer portal:", error);
+    }
   };
 
   const handleCancelSubscription = () => {
@@ -187,7 +238,7 @@ export default function SettingsPage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {subscriptionType === "Free" ? (
+          {subscriptionType === "free" ? (
             <>
               <div className="p-4 bg-muted/50 rounded-lg space-y-3">
                 <p className="text-sm text-muted-foreground">
@@ -216,13 +267,11 @@ export default function SettingsPage() {
                   </li>
                 </ul>
               </div>
-              <Button
-                className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto"
-                onClick={handleUpgrade}
-              >
-                <Crown className="w-4 h-4 mr-2" />
-                Upgrade to Pro
-              </Button>
+              <PricingPlans
+                currentPlan={subscriptionType}
+                onUpgrade={handleUpgrade}
+                loading={subscriptionLoading}
+              />
             </>
           ) : (
             <>
@@ -239,13 +288,15 @@ export default function SettingsPage() {
                   </div>
                 </div>
               </div>
-              <Button
-                variant="outline"
-                className="border-border text-muted-foreground hover:bg-muted hover:text-foreground w-full sm:w-auto"
-                onClick={handleCancelSubscription}
-              >
-                Cancel Subscription
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handleManageSubscription}
+                  className="flex-1 sm:flex-none"
+                >
+                  Manage Subscription
+                </Button>
+              </div>
             </>
           )}
         </CardContent>
