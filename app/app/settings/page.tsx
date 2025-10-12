@@ -201,7 +201,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-4xl">
+    <div className="p-6 space-y-8 max-w-7xl mx-auto">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-foreground mb-2">Settings</h1>
@@ -237,41 +237,64 @@ export default function SettingsPage() {
             </Badge>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           {subscriptionType === "free" ? (
             <>
-              <div className="p-4 bg-muted/50 rounded-lg space-y-3">
-                <p className="text-sm text-muted-foreground">
-                  You're currently on the Free plan. Upgrade to Pro to unlock:
+              <div className="p-6 bg-muted/50 rounded-lg space-y-4">
+                <p className="text-base text-muted-foreground">
+                  You're currently on the Free plan. Upgrade to unlock premium
+                  features:
                 </p>
-                <ul className="space-y-2 text-sm text-foreground">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-primary" />
-                    Unlimited video generations
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-primary" />
-                    Access to all video models (Sora 2 Pro)
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-primary" />
-                    Priority processing queue
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-primary" />
-                    Remove watermarks
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-primary" />
-                    Advanced analytics
-                  </li>
-                </ul>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <CheckCircle className="w-5 h-5 text-primary" />
+                      <span className="text-sm text-foreground">
+                        Unlimited video generations
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <CheckCircle className="w-5 h-5 text-primary" />
+                      <span className="text-sm text-foreground">
+                        Access to all video models (Sora 2 Pro)
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <CheckCircle className="w-5 h-5 text-primary" />
+                      <span className="text-sm text-foreground">
+                        Priority processing queue
+                      </span>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <CheckCircle className="w-5 h-5 text-primary" />
+                      <span className="text-sm text-foreground">
+                        Remove watermarks
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <CheckCircle className="w-5 h-5 text-primary" />
+                      <span className="text-sm text-foreground">
+                        Advanced analytics
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <CheckCircle className="w-5 h-5 text-primary" />
+                      <span className="text-sm text-foreground">
+                        API access
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <PricingPlans
-                currentPlan={subscriptionType}
-                onUpgrade={handleUpgrade}
-                loading={subscriptionLoading}
-              />
+              <div className="pt-4">
+                <PricingPlans
+                  currentPlan={subscriptionType}
+                  onUpgrade={handleUpgrade}
+                  loading={subscriptionLoading}
+                />
+              </div>
             </>
           ) : (
             <>
@@ -314,19 +337,19 @@ export default function SettingsPage() {
             Connect multiple social media accounts to post your videos
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-8">
           {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-6 h-6 text-primary animate-spin" />
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 text-primary animate-spin" />
             </div>
           ) : (
             <>
               {/* TikTok Section */}
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-black flex items-center justify-center">
-                      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-lg bg-black flex items-center justify-center">
+                      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
                         <path
                           d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"
                           fill="white"
@@ -334,15 +357,17 @@ export default function SettingsPage() {
                       </svg>
                     </div>
                     <div>
-                      <p className="font-semibold text-foreground">TikTok</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-lg font-semibold text-foreground">
+                        TikTok
+                      </p>
+                      <p className="text-sm text-muted-foreground">
                         {tiktokAccounts.length} account
                         {tiktokAccounts.length !== 1 ? "s" : ""} connected
                       </p>
                     </div>
                   </div>
                   <Button
-                    size="sm"
+                    size="default"
                     variant="outline"
                     className="border-border"
                     onClick={handleConnectTikTok}
@@ -353,34 +378,31 @@ export default function SettingsPage() {
                 </div>
 
                 {tiktokAccounts.length > 0 ? (
-                  <div className="space-y-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {tiktokAccounts.map((account) => (
                       <div
                         key={account.id}
-                        className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border"
+                        className="p-4 bg-muted/30 rounded-lg border border-border hover:border-primary/50 transition-colors"
                       >
-                        <div className="flex items-center gap-3">
-                          <Avatar className="w-10 h-10">
-                            <AvatarImage src={account.profile_picture_url} />
-                            <AvatarFallback className="bg-primary/10 text-primary">
-                              {account.username.substring(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-medium text-foreground">
-                              @{account.username}
-                            </p>
-                            {account.display_name && (
-                              <p className="text-xs text-muted-foreground">
-                                {account.display_name}
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="w-12 h-12">
+                              <AvatarImage src={account.profile_picture_url} />
+                              <AvatarFallback className="bg-primary/10 text-primary">
+                                {account.username.substring(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium text-foreground">
+                                @{account.username}
                               </p>
-                            )}
+                              {account.display_name && (
+                                <p className="text-xs text-muted-foreground">
+                                  {account.display_name}
+                                </p>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge className="bg-green-500/20 text-green-700 text-xs">
-                            {account.connection_status}
-                          </Badge>
                           <Button
                             variant="ghost"
                             size="icon"
@@ -396,13 +418,37 @@ export default function SettingsPage() {
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
+                        <div className="flex items-center justify-between">
+                          <Badge className="bg-green-500/20 text-green-700 text-xs">
+                            {account.connection_status}
+                          </Badge>
+                          <p className="text-xs text-muted-foreground">
+                            Connected{" "}
+                            {new Date(account.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="p-4 bg-muted/20 rounded-lg border border-dashed border-border text-center">
-                    <p className="text-sm text-muted-foreground">
-                      No TikTok accounts connected
+                  <div className="p-8 bg-muted/30 rounded-lg border border-dashed border-border text-center">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+                      <svg
+                        className="w-8 h-8 text-muted-foreground"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <path
+                          d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      No TikTok accounts connected yet
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Connect your TikTok accounts to start posting your videos
                     </p>
                   </div>
                 )}
@@ -411,22 +457,24 @@ export default function SettingsPage() {
               <Separator />
 
               {/* Instagram Section */}
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#833AB4] via-[#FD1D1D] to-[#FCAF45] flex items-center justify-center">
-                      <Instagram className="w-5 h-5 text-white" />
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-[#833AB4] via-[#FD1D1D] to-[#FCAF45] flex items-center justify-center">
+                      <Instagram className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <p className="font-semibold text-foreground">Instagram</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-lg font-semibold text-foreground">
+                        Instagram
+                      </p>
+                      <p className="text-sm text-muted-foreground">
                         {instagramAccounts.length} account
                         {instagramAccounts.length !== 1 ? "s" : ""} connected
                       </p>
                     </div>
                   </div>
                   <Button
-                    size="sm"
+                    size="default"
                     variant="outline"
                     className="border-border"
                     onClick={handleConnectInstagram}
@@ -437,34 +485,31 @@ export default function SettingsPage() {
                 </div>
 
                 {instagramAccounts.length > 0 ? (
-                  <div className="space-y-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {instagramAccounts.map((account) => (
                       <div
                         key={account.id}
-                        className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border"
+                        className="p-4 bg-muted/30 rounded-lg border border-border hover:border-primary/50 transition-colors"
                       >
-                        <div className="flex items-center gap-3">
-                          <Avatar className="w-10 h-10">
-                            <AvatarImage src={account.profile_picture_url} />
-                            <AvatarFallback className="bg-primary/10 text-primary">
-                              {account.username.substring(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-medium text-foreground">
-                              @{account.username}
-                            </p>
-                            {account.display_name && (
-                              <p className="text-xs text-muted-foreground">
-                                {account.display_name}
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="w-12 h-12">
+                              <AvatarImage src={account.profile_picture_url} />
+                              <AvatarFallback className="bg-primary/10 text-primary">
+                                {account.username.substring(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium text-foreground">
+                                @{account.username}
                               </p>
-                            )}
+                              {account.display_name && (
+                                <p className="text-xs text-muted-foreground">
+                                  {account.display_name}
+                                </p>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge className="bg-green-500/20 text-green-700 text-xs">
-                            {account.connection_status}
-                          </Badge>
                           <Button
                             variant="ghost"
                             size="icon"
@@ -480,13 +525,28 @@ export default function SettingsPage() {
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
+                        <div className="flex items-center justify-between">
+                          <Badge className="bg-green-500/20 text-green-700 text-xs">
+                            {account.connection_status}
+                          </Badge>
+                          <p className="text-xs text-muted-foreground">
+                            Connected{" "}
+                            {new Date(account.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="p-4 bg-muted/20 rounded-lg border border-dashed border-border text-center">
-                    <p className="text-sm text-muted-foreground">
-                      No Instagram accounts connected
+                  <div className="p-8 bg-muted/30 rounded-lg border border-dashed border-border text-center">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-[#833AB4] via-[#FD1D1D] to-[#FCAF45] flex items-center justify-center">
+                      <Instagram className="w-8 h-8 text-white" />
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      No Instagram accounts connected yet
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Connect your Instagram accounts to expand your reach
                     </p>
                   </div>
                 )}
