@@ -222,7 +222,9 @@ export function SingleVideoForm({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="sora-2">Sora 2</SelectItem>
-                  <SelectItem value="sora-2-pro">Sora 2 Pro</SelectItem>
+                  <SelectItem value="sora-2-pro" disabled>
+                    Sora 2 Pro (coming soon)
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -241,8 +243,12 @@ export function SingleVideoForm({
                   <SelectItem value="4">4 seconds</SelectItem>
                   <SelectItem value="8">8 seconds</SelectItem>
                   <SelectItem value="12">12 seconds</SelectItem>
-                  <SelectItem value="15">15 seconds</SelectItem>
-                  <SelectItem value="30">30 seconds</SelectItem>
+                  <SelectItem value="15" disabled>
+                    15 seconds (coming soon)
+                  </SelectItem>
+                  <SelectItem value="30" disabled>
+                    30 seconds (coming soon)
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>

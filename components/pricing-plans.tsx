@@ -106,16 +106,34 @@ export function PricingPlans({
             </CardHeader>
 
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>
-                    {plan.features.videoGenerations === -1
-                      ? "Unlimited"
-                      : plan.features.videoGenerations}{" "}
-                    video generations
-                  </span>
+              {/* Credits - Prominently displayed */}
+              {plan.features.credits > 0 && (
+                <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 text-center">
+                  <div className="text-2xl font-bold text-primary">
+                    {plan.features.credits}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    credits/month
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    ~{Math.floor(plan.features.credits / 8)}× 8sec videos
+                  </div>
                 </div>
+              )}
+
+              <div className="space-y-2">
+                {plan.features.credits > 0 && (
+                  <>
+                    <div className="flex items-center gap-2 text-sm">
+                      <CheckCircle className="w-4 h-4 text-green-500" />
+                      <span>1 credit = 1 second video</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <CheckCircle className="w-4 h-4 text-green-500" />
+                      <span>Mix any video lengths</span>
+                    </div>
+                  </>
+                )}
 
                 <div className="flex items-center gap-2 text-sm">
                   <CheckCircle className="w-4 h-4 text-green-500" />
@@ -140,13 +158,6 @@ export function PricingPlans({
                   </div>
                 )}
 
-                {plan.features.soraPro && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                    <span>Sora 2 Pro access</span>
-                  </div>
-                )}
-
                 {plan.features.analytics === "advanced" && (
                   <div className="flex items-center gap-2 text-sm">
                     <CheckCircle className="w-4 h-4 text-green-500" />
@@ -158,20 +169,6 @@ export function PricingPlans({
                   <div className="flex items-center gap-2 text-sm">
                     <CheckCircle className="w-4 h-4 text-green-500" />
                     <span>API access</span>
-                  </div>
-                )}
-
-                {plan.features.whiteLabel && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                    <span>White-label options</span>
-                  </div>
-                )}
-
-                {plan.features.customTemplates && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                    <span>Custom templates</span>
                   </div>
                 )}
               </div>

@@ -214,13 +214,14 @@ Overall aesthetic: Premium commercial quality, modern and aspirational, fast-pac
     alert("Prompt copied to clipboard!");
   };
 
-  const handleCreateWithSora = () => {
+  const handleCreateVideo = (mode: "single" | "variations") => {
     // Navigate to create video with the detailed prompt pre-filled
     const params = new URLSearchParams({
       prompt: editedPrompt,
       model: "sora-2",
       size: "720x1280",
       seconds: "8",
+      mode: mode,
     });
 
     // Include custom script if it was used
@@ -556,22 +557,31 @@ Overall aesthetic: Premium commercial quality, modern and aspirational, fast-pac
                 className="bg-background border-border min-h-[300px] font-mono text-sm"
               />
 
-              <div className="flex gap-2">
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => handleCreateVideo("single")}
+                    className="flex-1 bg-primary hover:bg-primary/90"
+                  >
+                    <Video className="w-4 h-4 mr-2" />
+                    Single Video
+                  </Button>
+                  <Button
+                    onClick={() => handleCreateVideo("variations")}
+                    className="flex-1 bg-primary hover:bg-primary/90"
+                  >
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Variations
+                  </Button>
+                </div>
+
                 <Button
                   onClick={handleCopyPrompt}
                   variant="outline"
-                  className="flex-1 border-border"
+                  className="w-full border-border"
                 >
                   <Copy className="w-4 h-4 mr-2" />
                   Copy Prompt
-                </Button>
-                <Button
-                  onClick={handleCreateWithSora}
-                  className="flex-1 bg-primary hover:bg-primary/90"
-                >
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Generate Video
-                  <ChevronRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>
 

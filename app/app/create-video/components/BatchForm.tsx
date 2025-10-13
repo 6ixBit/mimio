@@ -112,7 +112,8 @@ export function BatchForm({ user, projects, onStart }: BatchFormProps) {
           let dbId: string | undefined;
           if (user) {
             const title =
-              formData.title || `Video ${index + 1} - ${new Date().toLocaleDateString()}`;
+              formData.title ||
+              `Video ${index + 1} - ${new Date().toLocaleDateString()}`;
             const { data: videoData } = await videosApi.create(user.id, {
               title,
               video_url: "",
@@ -230,9 +231,13 @@ export function BatchForm({ user, projects, onStart }: BatchFormProps) {
             <div className="space-y-2">
               <Label>Video Title (Optional)</Label>
               <Input
-                placeholder={`Video ${index + 1} - ${new Date().toLocaleDateString()}`}
+                placeholder={`Video ${
+                  index + 1
+                } - ${new Date().toLocaleDateString()}`}
                 value={video.title}
-                onChange={(e) => updateVideoForm(index, "title", e.target.value)}
+                onChange={(e) =>
+                  updateVideoForm(index, "title", e.target.value)
+                }
                 disabled={isSubmitting}
               />
             </div>
@@ -245,7 +250,9 @@ export function BatchForm({ user, projects, onStart }: BatchFormProps) {
               <Textarea
                 placeholder="Describe this video..."
                 value={video.prompt}
-                onChange={(e) => updateVideoForm(index, "prompt", e.target.value)}
+                onChange={(e) =>
+                  updateVideoForm(index, "prompt", e.target.value)
+                }
                 required
                 disabled={isSubmitting}
                 className="min-h-[80px]"
@@ -258,7 +265,9 @@ export function BatchForm({ user, projects, onStart }: BatchFormProps) {
                 <Label>Model</Label>
                 <Select
                   value={video.model}
-                  onValueChange={(value) => updateVideoForm(index, "model", value)}
+                  onValueChange={(value) =>
+                    updateVideoForm(index, "model", value)
+                  }
                   disabled={isSubmitting}
                 >
                   <SelectTrigger>
@@ -266,7 +275,9 @@ export function BatchForm({ user, projects, onStart }: BatchFormProps) {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="sora-2">Sora 2</SelectItem>
-                    <SelectItem value="sora-2-pro">Sora 2 Pro</SelectItem>
+                    <SelectItem value="sora-2-pro" disabled>
+                      Sora 2 Pro (coming soon)
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -275,7 +286,9 @@ export function BatchForm({ user, projects, onStart }: BatchFormProps) {
                 <Label>Resolution</Label>
                 <Select
                   value={video.size}
-                  onValueChange={(value) => updateVideoForm(index, "size", value)}
+                  onValueChange={(value) =>
+                    updateVideoForm(index, "size", value)
+                  }
                   disabled={isSubmitting}
                 >
                   <SelectTrigger>
@@ -294,7 +307,9 @@ export function BatchForm({ user, projects, onStart }: BatchFormProps) {
                 <Label>Duration</Label>
                 <Select
                   value={video.seconds}
-                  onValueChange={(value) => updateVideoForm(index, "seconds", value)}
+                  onValueChange={(value) =>
+                    updateVideoForm(index, "seconds", value)
+                  }
                   disabled={isSubmitting}
                 >
                   <SelectTrigger>
@@ -336,16 +351,17 @@ export function BatchForm({ user, projects, onStart }: BatchFormProps) {
         {isSubmitting ? (
           <>
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Creating {videoForms.length} Video{videoForms.length !== 1 ? "s" : ""}...
+            Creating {videoForms.length} Video
+            {videoForms.length !== 1 ? "s" : ""}...
           </>
         ) : (
           <>
             <Layers className="w-4 h-4 mr-2" />
-            Create Batch ({videoForms.length} video{videoForms.length !== 1 ? "s" : ""})
+            Create Batch ({videoForms.length} video
+            {videoForms.length !== 1 ? "s" : ""})
           </>
         )}
       </Button>
     </form>
   );
 }
-

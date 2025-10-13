@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { EnvironmentToggle } from "@/components/environment-toggle";
 import { useAuth } from "@/lib/auth-context";
+import { CreditBalance } from "@/components/credit-balance";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -154,6 +155,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           {/* User Section at Bottom - Logged In */}
           {!sidebarCollapsed && user && (
             <div className="mt-4 pt-4 border-t border-border space-y-2">
+              {/* Credit Balance & Subscription */}
+              <CreditBalance compact={true} />
+
               {/* User Email */}
               <div className="flex items-center gap-2 px-3 py-2">
                 <User className="w-4 h-4 text-muted-foreground" />
