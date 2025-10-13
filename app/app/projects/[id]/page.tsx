@@ -192,7 +192,7 @@ export default function ProjectDetailPage() {
             {error || "Project not found"}
           </h3>
           <Button
-            onClick={() => router.push("/projects")}
+            onClick={() => router.push("/app/projects")}
             className="mt-4 bg-primary hover:bg-primary/90 text-primary-foreground"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -214,7 +214,7 @@ export default function ProjectDetailPage() {
 
       {/* Back Button */}
       <Button
-        onClick={() => router.push("/projects")}
+        onClick={() => router.push("/app/projects")}
         variant="outline"
         className="border-border"
       >

@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -23,7 +22,6 @@ import {
   ChevronRight,
   Check,
   X,
-  Film,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { getApiUrl, API_ENDPOINTS } from "@/lib/api-config";
@@ -62,10 +60,8 @@ export default function AnalyzeVideoPage() {
 
   // Customization state
   const [editedPrompt, setEditedPrompt] = useState("");
-  const [productName, setProductName] = useState("");
-  const [brandName, setBrandName] = useState("");
-  const [customInstructions, setCustomInstructions] = useState("");
   const [includeTranscript, setIncludeTranscript] = useState(true);
+  const [ignoreTextOnScreen, setIgnoreTextOnScreen] = useState(false);
 
   // Drag and drop handler
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -105,6 +101,7 @@ export default function AnalyzeVideoPage() {
 
       formData.append("video_file", selectedVideo);
       formData.append("include_transcript", includeTranscript.toString());
+      formData.append("ignore_text_on_screen", ignoreTextOnScreen.toString());
 
       // Simulate progress
       const progressInterval = setInterval(() => {
@@ -184,27 +181,6 @@ Overall aesthetic: Premium commercial quality, modern and aspirational, fast-pac
     } finally {
       setIsAnalyzing(false);
     }
-  };
-
-  const handleCustomize = () => {
-    if (!analysis) return;
-
-    let customized = analysis.sora_prompt;
-
-    // Replace product/brand mentions
-    if (productName) {
-      customized = customized.replace(/product/gi, productName);
-    }
-
-    if (brandName) {
-      customized = `${customized}\n\nBrand: ${brandName}. Maintain brand identity throughout.`;
-    }
-
-    if (customInstructions) {
-      customized = `${customized}\n\nAdditional instructions: ${customInstructions}`;
-    }
-
-    setEditedPrompt(customized);
   };
 
   const handleCopyPrompt = () => {
@@ -335,7 +311,25 @@ Overall aesthetic: Premium commercial quality, modern and aspirational, fast-pac
                 htmlFor="include-transcript"
                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
               >
-                Include audio transcript in generated prompt
+                Include spoken dialogue and audio content in analysis
+              </Label>
+            </div>
+
+            {/* Ignore Text on Screen Option */}
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="ignore-text"
+                checked={ignoreTextOnScreen}
+                onCheckedChange={(checked) =>
+                  setIgnoreTextOnScreen(checked === true)
+                }
+                disabled={isAnalyzing}
+              />
+              <Label
+                htmlFor="ignore-text"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Ignore text on screen (focus on actions and visuals only)
               </Label>
             </div>
 
@@ -416,124 +410,6 @@ Overall aesthetic: Premium commercial quality, modern and aspirational, fast-pac
                   {analysis.overall_description}
                 </p>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Scene Breakdown */}
-          <Card className="bg-card border-border">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Film className="w-5 h-5 text-primary" />
-                Scene-by-Scene Breakdown
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {analysis.scenes.map((scene, index) => (
-                <div
-                  key={index}
-                  className="p-4 bg-muted/50 rounded-lg border border-border space-y-3"
-                >
-                  <div className="flex items-center justify-between">
-                    <Badge className="bg-primary text-primary-foreground">
-                      Scene {index + 1}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">
-                      {scene.timestamp} ({scene.duration})
-                    </span>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground">
-                        Description
-                      </p>
-                      <p className="text-sm">{scene.description}</p>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div>
-                        <p className="text-xs font-medium text-muted-foreground">
-                          📷 Camera
-                        </p>
-                        <p className="text-sm">{scene.camera}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-medium text-muted-foreground">
-                          💡 Lighting
-                        </p>
-                        <p className="text-sm">{scene.lighting}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-medium text-muted-foreground">
-                          🎬 Action
-                        </p>
-                        <p className="text-sm">{scene.action}</p>
-                      </div>
-                      {scene.audio && (
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground">
-                            🔊 Audio
-                          </p>
-                          <p className="text-sm">{scene.audio}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          {/* Customization */}
-          <Card className="bg-card border-border">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-primary" />
-                Customize for Your Brand
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="product">Product Name</Label>
-                  <Input
-                    id="product"
-                    placeholder="e.g., EcoBottle Pro"
-                    value={productName}
-                    onChange={(e) => setProductName(e.target.value)}
-                    className="bg-background border-border"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="brand">Brand Name</Label>
-                  <Input
-                    id="brand"
-                    placeholder="e.g., GreenTech"
-                    value={brandName}
-                    onChange={(e) => setBrandName(e.target.value)}
-                    className="bg-background border-border"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="custom">Additional Instructions</Label>
-                <Textarea
-                  id="custom"
-                  placeholder="e.g., Add more emphasis on sustainability, use green color grading..."
-                  value={customInstructions}
-                  onChange={(e) => setCustomInstructions(e.target.value)}
-                  className="bg-background border-border min-h-[80px]"
-                />
-              </div>
-
-              <Button
-                onClick={handleCustomize}
-                variant="outline"
-                className="w-full border-border"
-              >
-                <Wand2 className="w-4 h-4 mr-2" />
-                Apply Customizations
-              </Button>
             </CardContent>
           </Card>
 

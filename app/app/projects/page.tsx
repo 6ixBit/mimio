@@ -101,7 +101,7 @@ export default function ProjectsPage() {
 
   // Navigate to project detail page
   const handleOpenProject = (projectId: string) => {
-    router.push(`/projects/${projectId}`);
+    router.push(`/app/projects/${projectId}`);
   };
 
   const filteredProjects = projects.filter((project) =>

@@ -311,6 +311,13 @@ export function VariationsForm({
           {/* Image Reference */}
           <div className="space-y-2">
             <Label htmlFor="image">Reference Image (Optional)</Label>
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-xs text-blue-700">
+                💡 For best video quality, upload an image that matches the
+                video resolution ({size}). We'll automatically resize other
+                images but this may reduce the final quality.
+              </p>
+            </div>
             <div
               {...getRootProps()}
               className={`

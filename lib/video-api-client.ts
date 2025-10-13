@@ -32,7 +32,7 @@ export class VideoApiClient {
     formData.append("model", params.model);
     formData.append("size", params.size);
     formData.append("seconds", params.seconds);
-    
+
     if (params.project_id) {
       formData.append("project_id", params.project_id);
     }
@@ -40,6 +40,13 @@ export class VideoApiClient {
     if (params.imageReference) {
       // Ensure proper MIME type
       let mimeType = params.imageReference.type;
+      console.log(
+        "Original file MIME type:",
+        mimeType,
+        "for file:",
+        params.imageReference.name
+      );
+
       if (!mimeType || mimeType === "application/octet-stream") {
         const ext = params.imageReference.name.toLowerCase().split(".").pop();
         const mimeMap: Record<string, string> = {
@@ -50,6 +57,12 @@ export class VideoApiClient {
           mp4: "video/mp4",
         };
         mimeType = mimeMap[ext || ""] || "application/octet-stream";
+        console.log(
+          "Corrected MIME type to:",
+          mimeType,
+          "based on extension:",
+          ext
+        );
       }
 
       const correctedFile = new File(
@@ -61,6 +74,7 @@ export class VideoApiClient {
         }
       );
 
+      console.log("Final file MIME type:", correctedFile.type);
       formData.append("image_reference", correctedFile);
     }
 
@@ -89,7 +103,7 @@ export class VideoApiClient {
     formData.append("model", params.model || "sora-2");
     formData.append("size", params.size || "720x1280");
     formData.append("seconds", params.seconds || "8");
-    
+
     if (params.project_id) {
       formData.append("project_id", params.project_id);
     }
@@ -97,6 +111,13 @@ export class VideoApiClient {
     if (params.image_reference) {
       // Ensure proper MIME type
       let mimeType = params.image_reference.type;
+      console.log(
+        "Original file MIME type:",
+        mimeType,
+        "for file:",
+        params.image_reference.name
+      );
+
       if (!mimeType || mimeType === "application/octet-stream") {
         const ext = params.image_reference.name.toLowerCase().split(".").pop();
         const mimeMap: Record<string, string> = {
@@ -107,6 +128,12 @@ export class VideoApiClient {
           mp4: "video/mp4",
         };
         mimeType = mimeMap[ext || ""] || "application/octet-stream";
+        console.log(
+          "Corrected MIME type to:",
+          mimeType,
+          "based on extension:",
+          ext
+        );
       }
 
       const correctedFile = new File(
@@ -118,6 +145,7 @@ export class VideoApiClient {
         }
       );
 
+      console.log("Final file MIME type:", correctedFile.type);
       formData.append("image_reference", correctedFile);
     }
 
@@ -231,4 +259,3 @@ export class VideoApiClient {
     }
   }
 }
-

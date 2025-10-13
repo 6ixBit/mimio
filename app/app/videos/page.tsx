@@ -528,7 +528,7 @@ export default function VideosPage() {
           {!searchTerm && (
             <Button
               className="bg-primary hover:bg-primary/90 text-primary-foreground"
-              onClick={() => router.push("/")}
+              onClick={() => router.push("/app/create-video")}
             >
               <Play className="w-4 h-4 mr-2" />
               Create Video

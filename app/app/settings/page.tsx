@@ -456,11 +456,11 @@ export default function SettingsPage() {
 
               <Separator />
 
-              {/* Instagram Section */}
+              {/* Instagram Section - Coming Soon */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-[#833AB4] via-[#FD1D1D] to-[#FCAF45] flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-[#833AB4] via-[#FD1D1D] to-[#FCAF45] flex items-center justify-center opacity-50">
                       <Instagram className="w-6 h-6 text-white" />
                     </div>
                     <div>
@@ -468,8 +468,7 @@ export default function SettingsPage() {
                         Instagram
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {instagramAccounts.length} account
-                        {instagramAccounts.length !== 1 ? "s" : ""} connected
+                        Coming soon
                       </p>
                     </div>
                   </div>
@@ -477,79 +476,25 @@ export default function SettingsPage() {
                     size="default"
                     variant="outline"
                     className="border-border"
-                    onClick={handleConnectInstagram}
+                    disabled
                   >
                     <Plus className="w-4 h-4 mr-2" />
-                    Add Account
+                    Coming Soon
                   </Button>
                 </div>
 
-                {instagramAccounts.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {instagramAccounts.map((account) => (
-                      <div
-                        key={account.id}
-                        className="p-4 bg-muted/30 rounded-lg border border-border hover:border-primary/50 transition-colors"
-                      >
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-3">
-                            <Avatar className="w-12 h-12">
-                              <AvatarImage src={account.profile_picture_url} />
-                              <AvatarFallback className="bg-primary/10 text-primary">
-                                {account.username.substring(0, 2).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="font-medium text-foreground">
-                                @{account.username}
-                              </p>
-                              {account.display_name && (
-                                <p className="text-xs text-muted-foreground">
-                                  {account.display_name}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-muted-foreground hover:text-red-600 hover:bg-red-50"
-                            onClick={() =>
-                              handleDisconnectAccount(
-                                account.id,
-                                "instagram",
-                                account.username
-                              )
-                            }
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <Badge className="bg-green-500/20 text-green-700 text-xs">
-                            {account.connection_status}
-                          </Badge>
-                          <p className="text-xs text-muted-foreground">
-                            Connected{" "}
-                            {new Date(account.created_at).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
+                <div className="p-8 bg-muted/20 rounded-lg border border-dashed border-border text-center">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-[#833AB4] via-[#FD1D1D] to-[#FCAF45] flex items-center justify-center opacity-50">
+                    <Instagram className="w-8 h-8 text-white" />
                   </div>
-                ) : (
-                  <div className="p-8 bg-muted/30 rounded-lg border border-dashed border-border text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-[#833AB4] via-[#FD1D1D] to-[#FCAF45] flex items-center justify-center">
-                      <Instagram className="w-8 h-8 text-white" />
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      No Instagram accounts connected yet
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Connect your Instagram accounts to expand your reach
-                    </p>
-                  </div>
-                )}
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Instagram integration coming soon
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    We're working on bringing Instagram support to expand your
+                    reach across platforms
+                  </p>
+                </div>
               </div>
 
               <div className="pt-4">
