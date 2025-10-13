@@ -71,14 +71,21 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       >
         <div className="p-4 flex-1 flex flex-col">
           <div className="flex items-center justify-between mb-8">
-            <div className={`${sidebarCollapsed ? "hidden" : "block"}`}>
-              <h1 className="text-primary font-bold text-lg tracking-wider">
-                MIMIO
-              </h1>
-              <p className="text-muted-foreground text-xs">
-                Your creative platform
-              </p>
-            </div>
+            {sidebarCollapsed ? (
+              <img src="/mimio_logo.png" alt="Mimio" className="w-12 h-12" />
+            ) : (
+              <div className="flex items-center gap-2">
+                <img src="/mimio_logo.png" alt="Mimio" className="w-12 h-12" />
+                <div>
+                  <h1 className="text-primary font-bold text-lg tracking-wider">
+                    MIMIO
+                  </h1>
+                  <p className="text-muted-foreground text-xs">
+                    Your creative platform
+                  </p>
+                </div>
+              </div>
+            )}
             <Button
               variant="ghost"
               size="icon"

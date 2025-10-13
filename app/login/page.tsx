@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Sparkles, Loader2, Mail, Lock } from "lucide-react";
+import { Loader2, Mail, Lock } from "lucide-react";
 import { auth } from "@/lib/supabase-auth";
 
 export default function LoginPage() {
@@ -51,8 +51,8 @@ export default function LoginPage() {
       <div className="w-full max-w-md space-y-6">
         {/* Logo/Brand */}
         <div className="text-center space-y-2">
-          <div className="flex items-center justify-center gap-2">
-            <Sparkles className="w-8 h-8 text-primary" />
+          <div className="flex items-center justify-center gap-3">
+            <img src="/mimio_logo.png" alt="Mimio" className="w-12 h-12" />
             <h1 className="text-4xl font-bold text-foreground">MIMIO</h1>
           </div>
           <p className="text-muted-foreground">
