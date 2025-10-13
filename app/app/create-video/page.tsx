@@ -68,6 +68,7 @@ function CreateVideoContent() {
   const urlSize = searchParams.get("size") || "720x1280";
   const urlSeconds = searchParams.get("seconds") || "8";
   const urlTemplateId = searchParams.get("template_id") || "";
+  const urlCustomScript = searchParams.get("customScript") || "";
 
   /**
    * Handle video download

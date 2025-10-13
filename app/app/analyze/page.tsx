@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -63,6 +64,13 @@ export default function AnalyzeVideoPage() {
   const [includeTranscript, setIncludeTranscript] = useState(true);
   const [ignoreTextOnScreen, setIgnoreTextOnScreen] = useState(false);
 
+  // Custom script state
+  const [audioOption, setAudioOption] = useState<
+    "original" | "custom" | "none"
+  >("original");
+  const [customScript, setCustomScript] = useState("");
+  const MAX_SCRIPT_LENGTH = 500;
+
   // Drag and drop handler
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
@@ -93,6 +101,14 @@ export default function AnalyzeVideoPage() {
       return;
     }
 
+    // Validate custom script if custom audio option is selected
+    if (audioOption === "custom" && customScript.trim().length < 10) {
+      alert(
+        "Please provide a script (at least 10 characters) for your custom audio"
+      );
+      return;
+    }
+
     setIsAnalyzing(true);
     setAnalysisProgress(0);
 
@@ -100,7 +116,17 @@ export default function AnalyzeVideoPage() {
       const formData = new FormData();
 
       formData.append("video_file", selectedVideo);
-      formData.append("include_transcript", includeTranscript.toString());
+
+      // Handle audio options
+      if (audioOption === "custom") {
+        formData.append("include_transcript", "false");
+        formData.append("custom_script", customScript);
+      } else if (audioOption === "none") {
+        formData.append("include_transcript", "false");
+      } else {
+        formData.append("include_transcript", "true");
+      }
+
       formData.append("ignore_text_on_screen", ignoreTextOnScreen.toString());
 
       // Simulate progress
@@ -196,6 +222,12 @@ Overall aesthetic: Premium commercial quality, modern and aspirational, fast-pac
       size: "720x1280",
       seconds: "8",
     });
+
+    // Include custom script if it was used
+    if (audioOption === "custom" && customScript) {
+      params.append("customScript", customScript);
+    }
+
     router.push(`/app/create-video?${params.toString()}`);
   };
 
@@ -297,22 +329,120 @@ Overall aesthetic: Premium commercial quality, modern and aspirational, fast-pac
               )}
             </div>
 
-            {/* Include Transcript Option */}
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="include-transcript"
-                checked={includeTranscript}
-                onCheckedChange={(checked) =>
-                  setIncludeTranscript(checked === true)
+            {/* Audio Options */}
+            <div className="space-y-4 p-4 border border-border rounded-lg bg-muted/30">
+              <div className="space-y-1">
+                <Label className="text-sm font-semibold">
+                  What should the video say?
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Choose how to handle the audio content
+                </p>
+              </div>
+
+              <RadioGroup
+                value={audioOption}
+                onValueChange={(value: "original" | "custom" | "none") =>
+                  setAudioOption(value)
                 }
                 disabled={isAnalyzing}
-              />
-              <Label
-                htmlFor="include-transcript"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                className="space-y-3"
               >
-                Include spoken dialogue and audio content in analysis
-              </Label>
+                {/* Original Audio Option */}
+                <div className="flex items-start space-x-3 p-3 rounded-lg border border-border hover:border-primary/50 transition-colors">
+                  <RadioGroupItem
+                    value="original"
+                    id="original-audio"
+                    className="mt-0.5"
+                  />
+                  <div className="flex-1 space-y-1">
+                    <Label
+                      htmlFor="original-audio"
+                      className="text-sm font-medium cursor-pointer"
+                    >
+                      Same as original video
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Keep the original dialogue and what they're saying
+                    </p>
+                  </div>
+                </div>
+
+                {/* Custom Script Option */}
+                <div className="flex items-start space-x-3 p-3 rounded-lg border border-border hover:border-primary/50 transition-colors">
+                  <RadioGroupItem
+                    value="custom"
+                    id="custom-script"
+                    className="mt-0.5"
+                  />
+                  <div className="flex-1 space-y-1">
+                    <Label
+                      htmlFor="custom-script"
+                      className="text-sm font-medium cursor-pointer"
+                    >
+                      Replace with my own message
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Talk about your product instead (e.g., "iPhone" → "our
+                      app")
+                    </p>
+                  </div>
+                </div>
+
+                {/* No Audio Option */}
+                <div className="flex items-start space-x-3 p-3 rounded-lg border border-border hover:border-primary/50 transition-colors">
+                  <RadioGroupItem
+                    value="none"
+                    id="no-audio"
+                    className="mt-0.5"
+                  />
+                  <div className="flex-1 space-y-1">
+                    <Label
+                      htmlFor="no-audio"
+                      className="text-sm font-medium cursor-pointer"
+                    >
+                      No audio / visual only
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Focus only on visual style, ignore all spoken content
+                    </p>
+                  </div>
+                </div>
+              </RadioGroup>
+
+              {/* Custom Script Textarea - Only show when custom is selected */}
+              {audioOption === "custom" && (
+                <div className="space-y-2 pt-2 pl-8">
+                  <Label className="text-xs font-medium">Your Message</Label>
+                  <Textarea
+                    placeholder="What do you want the video to say? (e.g., 'Check out our new productivity app! It helps you manage tasks 10x faster!')"
+                    value={customScript}
+                    onChange={(e) =>
+                      setCustomScript(
+                        e.target.value.slice(0, MAX_SCRIPT_LENGTH)
+                      )
+                    }
+                    disabled={isAnalyzing}
+                    className="min-h-[100px] resize-none"
+                    maxLength={MAX_SCRIPT_LENGTH}
+                  />
+                  <div className="flex items-center justify-between text-xs">
+                    <p className="text-muted-foreground">
+                      💡 Keep it brief - we'll adapt it to match the video's
+                      style
+                    </p>
+                    <p
+                      className={`font-medium ${
+                        customScript.length > MAX_SCRIPT_LENGTH * 0.9
+                          ? "text-orange-500"
+                          : "text-muted-foreground"
+                      }`}
+                    >
+                      {customScript.length}/{MAX_SCRIPT_LENGTH}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Ignore Text on Screen Option */}
