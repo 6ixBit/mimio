@@ -126,7 +126,7 @@ export default function AnalyzeVideoPage() {
       setAnalysisProgress(100);
     } catch (error) {
       console.error("Error analyzing video:", error);
-      alert("Failed to analyze video. This feature is coming soon!");
+      alert("Failed to analyze video. Please try again.");
 
       // Mock data for demonstration
       const mockAnalysis: VideoAnalysis = {
@@ -340,9 +340,7 @@ Overall aesthetic: Premium commercial quality, modern and aspirational, fast-pac
                   <div className="text-center space-y-4">
                     <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto" />
                     <div>
-                      <p className="text-sm font-medium">
-                        Analyzing video with AI...
-                      </p>
+                      <p className="text-sm font-medium">Analyzing video...</p>
                       <p className="text-xs text-muted-foreground">
                         This may take 30-60 seconds
                       </p>
@@ -352,11 +350,11 @@ Overall aesthetic: Premium commercial quality, modern and aspirational, fast-pac
                 <Progress value={analysisProgress} className="h-2" />
                 <p className="text-xs text-center text-muted-foreground">
                   {analysisProgress < 30
-                    ? "Extracting key frames..."
+                    ? "Processing video..."
                     : analysisProgress < 60
-                    ? "Analyzing scenes with GPT-4 Vision..."
+                    ? "Analyzing scenes..."
                     : analysisProgress < 90
-                    ? "Generating detailed Sora prompt..."
+                    ? "Generating format breakdown..."
                     : "Finalizing..."}
                 </p>
               </div>
@@ -418,7 +416,7 @@ Overall aesthetic: Premium commercial quality, modern and aspirational, fast-pac
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Video className="w-5 h-5 text-primary" />
-                Detailed Sora Prompt
+                Video Format Breakdown
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -442,7 +440,7 @@ Overall aesthetic: Premium commercial quality, modern and aspirational, fast-pac
                   className="flex-1 bg-primary hover:bg-primary/90"
                 >
                   <Sparkles className="w-4 h-4 mr-2" />
-                  Create with Sora
+                  Generate Video
                   <ChevronRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>
