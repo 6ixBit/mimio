@@ -101,7 +101,7 @@ export function PromptAdapterModal({
           <DialogDescription>
             {isAdaptMode
               ? "Describe how you want to modify the existing prompt. The AI will adapt it while maintaining the detailed format."
-              : "Describe the video you want to create in plain English. The AI will generate a detailed Sora prompt for you."}
+              : "Describe the video you want to create in plain English."}
           </DialogDescription>
         </DialogHeader>
 
@@ -136,15 +136,6 @@ export function PromptAdapterModal({
               <p className="text-sm text-red-700">{error}</p>
             </div>
           )}
-
-          {/* Info Box */}
-          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-xs text-blue-700">
-              💡 <strong>Tip:</strong> The AI will generate a detailed prompt in
-              our proven format, including scene-by-scene breakdowns, camera
-              angles, lighting details, and more for the best video results.
-            </p>
-          </div>
         </div>
 
         {/* Action Buttons */}

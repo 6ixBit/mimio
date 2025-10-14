@@ -25,6 +25,7 @@ import {
   X,
   Sparkles,
   Share2,
+  Pencil,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { videosApi, templatesApi } from "@/lib/supabase";
@@ -32,6 +33,15 @@ import { SaveTemplateModal } from "@/components/templates/save-template-modal";
 import { ConfirmationModal } from "@/components/confirmation-modal";
 import { VideoApiClient } from "@/lib/video-api-client";
 import { PostToSocialModal } from "@/components/post-to-social-modal";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
 interface VideoWithProject {
   id: string;
@@ -73,6 +83,8 @@ export default function VideosPage() {
     null
   );
   const [videoToPost, setVideoToPost] = useState<VideoWithProject | null>(null);
+  const [videoToEdit, setVideoToEdit] = useState<VideoWithProject | null>(null);
+  const [editedTitle, setEditedTitle] = useState("");
 
   // Fetch videos from database
   useEffect(() => {
@@ -271,6 +283,35 @@ export default function VideosPage() {
       seconds: video.duration_seconds?.toString() || "8",
     });
     router.push(`/app/create-video?${params.toString()}`);
+  };
+
+  const handleEditTitle = (video: VideoWithProject) => {
+    setVideoToEdit(video);
+    setEditedTitle(video.title);
+  };
+
+  const handleSaveTitle = async () => {
+    if (!videoToEdit || !editedTitle.trim()) return;
+
+    try {
+      await videosApi.update(videoToEdit.id, {
+        title: editedTitle.trim(),
+      });
+
+      // Update local state
+      setVideos((prev) =>
+        prev.map((v) =>
+          v.id === videoToEdit.id ? { ...v, title: editedTitle.trim() } : v
+        )
+      );
+
+      toast.success("Title updated successfully!");
+      setVideoToEdit(null);
+      setEditedTitle("");
+    } catch (err) {
+      console.error("Error updating title:", err);
+      toast.error("Failed to update title");
+    }
   };
 
   // Loading state
@@ -476,6 +517,13 @@ export default function VideosPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem
+                            onClick={() => handleEditTitle(video)}
+                            className="cursor-pointer"
+                          >
+                            <Pencil className="w-4 h-4 mr-2" />
+                            Edit Title
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
                             onClick={() => handleSaveAsTemplate(video)}
                             className="cursor-pointer"
                           >
@@ -663,6 +711,47 @@ export default function VideosPage() {
           }}
         />
       )}
+
+      {/* Edit Title Modal */}
+      <Dialog open={!!videoToEdit} onOpenChange={() => setVideoToEdit(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Video Title</DialogTitle>
+            <DialogDescription>
+              Update the title of your video
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="title">Title</Label>
+              <Input
+                id="title"
+                value={editedTitle}
+                onChange={(e) => setEditedTitle(e.target.value)}
+                placeholder="Enter video title"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleSaveTitle();
+                  }
+                }}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setVideoToEdit(null)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveTitle}
+              disabled={!editedTitle.trim()}
+              className="bg-primary hover:bg-primary/90"
+            >
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
