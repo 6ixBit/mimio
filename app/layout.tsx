@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Geist_Mono as GeistMono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/lib/auth-context";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 const geistMono = GeistMono({ subsets: ["latin"] });
@@ -71,6 +72,7 @@ export default function RootLayout({
           enableSystem={false}
         >
           <AuthProvider>{children}</AuthProvider>
+          <Toaster position="top-right" richColors />
         </ThemeProvider>
       </body>
     </html>

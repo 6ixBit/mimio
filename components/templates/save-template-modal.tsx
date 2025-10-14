@@ -88,13 +88,12 @@ export function SaveTemplateModal({
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">Description (optional)</Label>
             <Textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Describe what this template is about and how to use it"
-              required
             />
           </div>
 

@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { toast } from "sonner";
 import {
   Upload,
   Video,
@@ -97,15 +98,18 @@ export default function AnalyzeVideoPage() {
 
   const handleAnalyze = async () => {
     if (!selectedVideo) {
-      alert("Please upload a video file");
+      toast.error("No video selected", {
+        description: "Please upload a video file to analyze.",
+      });
       return;
     }
 
     // Validate custom script if custom audio option is selected
     if (audioOption === "custom" && customScript.trim().length < 10) {
-      alert(
-        "Please provide a script (at least 10 characters) for your custom audio"
-      );
+      toast.error("Script too short", {
+        description:
+          "Please provide a script with at least 10 characters for your custom audio.",
+      });
       return;
     }
 
@@ -152,7 +156,10 @@ export default function AnalyzeVideoPage() {
       setAnalysisProgress(100);
     } catch (error) {
       console.error("Error analyzing video:", error);
-      alert("Failed to analyze video. Please try again.");
+      toast.error("Analysis failed", {
+        description:
+          "Failed to analyze video. Please try again or contact support.",
+      });
 
       // Mock data for demonstration
       const mockAnalysis: VideoAnalysis = {
@@ -211,7 +218,9 @@ Overall aesthetic: Premium commercial quality, modern and aspirational, fast-pac
 
   const handleCopyPrompt = () => {
     navigator.clipboard.writeText(editedPrompt);
-    alert("Prompt copied to clipboard!");
+    toast.success("Copied to clipboard!", {
+      description: "The video format breakdown has been copied.",
+    });
   };
 
   const handleCreateVideo = (mode: "single" | "variations") => {
@@ -237,9 +246,6 @@ Overall aesthetic: Premium commercial quality, modern and aspirational, fast-pac
     setVideoUrl("");
     setAnalysis(null);
     setEditedPrompt("");
-    setProductName("");
-    setBrandName("");
-    setCustomInstructions("");
     setAnalysisProgress(0);
   };
 

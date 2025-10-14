@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripeServer, getPlanByPriceId } from "@/lib/stripe";
 import { subscriptionApi } from "@/lib/subscription-api";
+import { addCredits, resetCreditsForRenewal } from "@/lib/credit-service";
 import Stripe from "stripe";
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
@@ -94,6 +95,26 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
     cancel_at_period_end: subscription.cancel_at_period_end,
   });
 
+  // Allocate credits for new/updated subscription
+  if (subscription.status === "active") {
+    const creditsToAllocate = parseInt(plan.features.credits || "0");
+
+    if (creditsToAllocate > 0) {
+      const result = await resetCreditsForRenewal(userId, planName);
+
+      if (result.success) {
+        console.log(
+          `Allocated ${creditsToAllocate} credits to user ${userId} for ${planName} plan`
+        );
+      } else {
+        console.error(
+          `Failed to allocate credits to user ${userId}:`,
+          result.error
+        );
+      }
+    }
+  }
+
   console.log(
     `Subscription updated for user ${userId}: ${subscription.status}`
   );
@@ -128,6 +149,12 @@ async function handleSubscriptionCancellation(
     cancel_at_period_end: false,
   });
 
+  // Reset credits to 0 for free plan
+  const result = await resetCreditsForRenewal(userId, "free");
+  if (result.success) {
+    console.log(`Credits reset to 0 for canceled user ${userId}`);
+  }
+
   console.log(`Subscription canceled for user ${userId}, downgraded to free`);
 }
 
@@ -155,6 +182,23 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
     status: "succeeded",
     description: `Payment for ${subscription.metadata.plan_name} plan`,
   });
+
+  // Reset credits on successful payment (monthly renewal)
+  const planName = subscription.metadata.plan_name;
+  if (planName && planName !== "free") {
+    const result = await resetCreditsForRenewal(userId, planName);
+
+    if (result.success) {
+      console.log(
+        `Credits reset for user ${userId} on ${planName} plan renewal`
+      );
+    } else {
+      console.error(
+        `Failed to reset credits for user ${userId}:`,
+        result.error
+      );
+    }
+  }
 
   console.log(
     `Payment succeeded for user ${userId}: $${invoice.amount_paid / 100}`

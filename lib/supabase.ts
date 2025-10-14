@@ -142,6 +142,98 @@ export const templatesApi = {
       .limit(limit);
   },
 
+  // Get public templates (admin-curated)
+  getPublic: async () => {
+    return await supabase
+      .from("ad_templates")
+      .select("*")
+      .eq("is_active", true)
+      .eq("is_public", true)
+      .order("created_at", { ascending: false });
+  },
+
+  // Get user's custom templates (created + saved)
+  getCustom: async (userId: string) => {
+    try {
+      // Templates created by the user
+      const { data: created, error: createdError } = await supabase
+        .from("ad_templates")
+        .select("*")
+        .eq("is_active", true)
+        .eq("created_by", userId)
+        .order("created_at", { ascending: false });
+
+      if (createdError) throw createdError;
+
+      // Templates saved by the user
+      const { data: savedLinks, error: savedLinksError } = await supabase
+        .from("user_saved_templates")
+        .select("template_id")
+        .eq("user_id", userId);
+
+      if (savedLinksError) throw savedLinksError;
+
+      let saved: any[] = [];
+      if (savedLinks && savedLinks.length > 0) {
+        const templateIds = savedLinks.map((r: any) => r.template_id);
+        const { data: savedTemplates, error: savedTemplatesError } =
+          await supabase
+            .from("ad_templates")
+            .select("*")
+            .in("id", templateIds)
+            .eq("is_active", true);
+
+        if (savedTemplatesError) throw savedTemplatesError;
+        saved = savedTemplates || [];
+      }
+
+      // Merge and deduplicate by id
+      const mergedMap = new Map<string, any>();
+      [...(created || []), ...saved].forEach((t: any) => {
+        mergedMap.set(t.id, t);
+      });
+
+      const merged = Array.from(mergedMap.values()).sort(
+        (a: any, b: any) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+
+      return { data: merged, error: null } as any;
+    } catch (error) {
+      return { data: null, error } as any;
+    }
+  },
+
+  // Save a template to user's custom collection
+  saveTemplate: async (templateId: string, userId: string) => {
+    return await supabase
+      .from("user_saved_templates")
+      .insert([{ template_id: templateId, user_id: userId }])
+      .select()
+      .single();
+  },
+
+  // Remove a template from user's custom collection
+  unsaveTemplate: async (templateId: string, userId: string) => {
+    return await supabase
+      .from("user_saved_templates")
+      .delete()
+      .eq("template_id", templateId)
+      .eq("user_id", userId);
+  },
+
+  // Check if user has saved a template
+  isSaved: async (templateId: string, userId: string) => {
+    const { data, error } = await supabase
+      .from("user_saved_templates")
+      .select("id")
+      .eq("template_id", templateId)
+      .eq("user_id", userId)
+      .single();
+
+    return { isSaved: !!data && !error, error };
+  },
+
   // Create a new template
   create: async (data: {
     title: string;
@@ -154,6 +246,9 @@ export const templatesApi = {
     duration_seconds: number;
     thumbnail_url?: string;
     is_active?: boolean;
+    is_public?: boolean;
+    created_by?: string;
+    category?: string;
   }) => {
     return await supabase.from("ad_templates").insert([data]).select().single();
   },

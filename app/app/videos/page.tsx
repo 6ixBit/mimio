@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
+import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -240,17 +241,24 @@ export default function VideosPage() {
         model: templateVideo.model,
         size: templateVideo.size,
         duration_seconds: templateVideo.duration_seconds || 8,
-        thumbnail_url: templateVideo.thumbnail_url || undefined,
+        thumbnail_url: templateVideo.video_url, // Use video URL as thumbnail
         is_active: true,
+        is_public: false,
+        created_by: user!.id,
       });
 
       if (error) throw error;
 
-      alert("Template created successfully!");
+      toast.success("Template created successfully!", {
+        description: "Your video has been saved as a custom template.",
+      });
       setTemplateVideo(null);
     } catch (err) {
       console.error("Error creating template:", err);
-      alert("Failed to create template. Please try again.");
+      toast.error("Failed to create template", {
+        description:
+          "Please try again or contact support if the issue persists.",
+      });
     }
   };
 

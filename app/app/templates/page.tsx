@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -23,6 +24,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Sparkles,
   Video,
@@ -35,8 +37,11 @@ import {
   ExternalLink,
   Plus,
   Loader2,
+  Heart,
+  BookOpen,
 } from "lucide-react";
 import { templatesApi, videosApi } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth-context";
 
 interface VideoTemplate {
   id: string;
@@ -79,9 +84,12 @@ const categories = [
 
 export default function TemplatesPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [templates, setTemplates] = useState<VideoTemplate[]>([]);
+  const [activeTab, setActiveTab] = useState("public");
+  const [publicTemplates, setPublicTemplates] = useState<VideoTemplate[]>([]);
+  const [customTemplates, setCustomTemplates] = useState<VideoTemplate[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Template videos modal
@@ -95,6 +103,7 @@ export default function TemplatesPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
+    description: "",
     video_type: "POV",
     video_prompt: "",
     original_video_url: "",
@@ -107,33 +116,52 @@ export default function TemplatesPage() {
   useEffect(() => {
     async function fetchTemplates() {
       try {
-        const { data, error } = await templatesApi.getAll();
-        if (error) throw error;
-        console.log("Templates from DB:", data);
+        // Fetch public templates
+        const { data: publicData, error: publicError } =
+          await templatesApi.getPublic();
+        if (publicError) throw publicError;
+
+        // Fetch custom templates if user is logged in
+        let customData: any[] = [];
+        if (user) {
+          const { data: customResult, error: customError } =
+            await templatesApi.getCustom(user.id);
+          if (customError) {
+            console.error("Error fetching custom templates:", customError);
+          } else {
+            customData = customResult || [];
+          }
+        }
 
         // For each template, try to get a sample video to use as thumbnail
-        const templatesWithThumbnails = await Promise.all(
-          (data || []).map(async (template) => {
-            try {
-              const { data: videos } = await templatesApi.getGeneratedVideos(
-                template.id,
-                1
-              );
-              const sampleVideo = videos?.[0];
-              return {
-                ...template,
-                thumbnail_url:
-                  sampleVideo?.thumbnail_url ||
-                  sampleVideo?.video_url ||
-                  template.thumbnail_url,
-              };
-            } catch (err) {
-              return template; // Return original template if fetching videos fails
-            }
-          })
-        );
+        const addThumbnails = async (templates: any[]) => {
+          return await Promise.all(
+            templates.map(async (template: any) => {
+              try {
+                const { data: videos } = await templatesApi.getGeneratedVideos(
+                  template.id,
+                  1
+                );
+                const sampleVideo: any = (videos as any)?.[0];
+                return {
+                  ...template,
+                  thumbnail_url:
+                    sampleVideo?.thumbnail_url ||
+                    sampleVideo?.video_url ||
+                    template.thumbnail_url,
+                };
+              } catch (err) {
+                return template; // Return original template if fetching videos fails
+              }
+            })
+          );
+        };
 
-        setTemplates(templatesWithThumbnails);
+        const publicWithThumbnails = await addThumbnails(publicData || []);
+        const customWithThumbnails = await addThumbnails(customData);
+
+        setPublicTemplates(publicWithThumbnails);
+        setCustomTemplates(customWithThumbnails);
       } catch (err) {
         console.error("Error fetching templates:", err);
       } finally {
@@ -142,10 +170,14 @@ export default function TemplatesPage() {
     }
 
     fetchTemplates();
-  }, []);
+  }, [user]);
+
+  // Get current templates based on active tab
+  const currentTemplates =
+    activeTab === "public" ? publicTemplates : customTemplates;
 
   // Filter templates
-  const filteredTemplates = templates.filter((template) => {
+  const filteredTemplates = currentTemplates.filter((template) => {
     const matchesCategory =
       selectedCategory === "All" || template.video_type === selectedCategory;
 
@@ -200,6 +232,7 @@ export default function TemplatesPage() {
     try {
       const { data, error } = await templatesApi.create({
         title: formData.title,
+        description: formData.description,
         video_type: formData.video_type,
         video_prompt: formData.video_prompt,
         original_video_url: formData.original_video_url,
@@ -207,21 +240,38 @@ export default function TemplatesPage() {
         size: formData.size,
         duration_seconds: parseInt(formData.duration_seconds),
         is_active: true,
+        is_public: false,
+        created_by: user?.id,
+        category: "custom",
       });
 
       if (error) {
-        alert("Error creating template: " + error.message);
+        toast.error("Error creating template", {
+          description: error.message,
+        });
         return;
       }
 
-      // Add new template to state
+      // Optimistically add locally, then try to refetch
       if (data) {
-        setTemplates([data, ...templates]);
+        setCustomTemplates([data, ...customTemplates]);
+      }
+      if (user) {
+        const { data: updatedCustom, error: fetchError } =
+          await templatesApi.getCustom(user.id);
+        if (
+          !fetchError &&
+          Array.isArray(updatedCustom) &&
+          updatedCustom.length > 0
+        ) {
+          setCustomTemplates(updatedCustom);
+        }
       }
 
       // Reset form and close dialog
       setFormData({
         title: "",
+        description: "",
         video_type: "POV",
         video_prompt: "",
         original_video_url: "",
@@ -230,10 +280,19 @@ export default function TemplatesPage() {
         duration_seconds: "8",
       });
       setIsDialogOpen(false);
-      alert("Template added successfully!");
+
+      // Switch to custom tab to show the new template
+      setActiveTab("custom");
+
+      toast.success("Template created successfully!", {
+        description: "Your template has been added to your custom collection.",
+      });
     } catch (err) {
       console.error("Error:", err);
-      alert("Failed to add template");
+      toast.error("Failed to create template", {
+        description:
+          "Please try again or contact support if the issue persists.",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -281,6 +340,19 @@ export default function TemplatesPage() {
                       setFormData({ ...formData, title: e.target.value })
                     }
                     placeholder="e.g., Product Showcase - Modern Tech"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description (optional)</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) =>
+                      setFormData({ ...formData, description: e.target.value })
+                    }
+                    placeholder="Describe what this template is about"
+                    className="min-h-[80px]"
                   />
                 </div>
 
@@ -468,6 +540,22 @@ export default function TemplatesPage() {
         </CardContent>
       </Card>
 
+      {/* Template Tabs - Centered above content */}
+      <div className="flex items-center justify-center">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-auto">
+          <TabsList className="grid grid-cols-2">
+            <TabsTrigger value="public" className="flex items-center gap-2">
+              <BookOpen className="w-4 h-4" />
+              Public
+            </TabsTrigger>
+            <TabsTrigger value="custom" className="flex items-center gap-2">
+              <Heart className="w-4 h-4" />
+              Custom
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+
       {/* Results Count */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
@@ -484,118 +572,143 @@ export default function TemplatesPage() {
       ) : (
         <>
           {/* Templates Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredTemplates.map((template) => (
-              <Card
-                key={template.id}
-                className="bg-card border-border hover:border-primary/50 transition-all duration-200 group"
-              >
-                <CardHeader className="p-0">
-                  {/* Thumbnail */}
-                  <div className="relative h-48 bg-gradient-to-br from-primary/20 to-primary/5 rounded-t-lg overflow-hidden">
-                    {template.thumbnail_url ? (
-                      <>
-                        {template.thumbnail_url.includes(".mp4") ||
-                        template.thumbnail_url.includes("video") ? (
-                          <video
-                            src={template.thumbnail_url}
-                            className="w-full h-full object-cover"
-                            preload="metadata"
-                            muted
-                            playsInline
-                          />
-                        ) : (
-                          <img
-                            src={template.thumbnail_url}
-                            alt={template.title}
-                            className="w-full h-full object-cover"
-                          />
-                        )}
-                        <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Play className="w-12 h-12 text-white drop-shadow-lg" />
+          {filteredTemplates.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredTemplates.map((template) => (
+                <Card
+                  key={template.id}
+                  className="bg-card border-border hover:border-primary/50 transition-all duration-200 group"
+                >
+                  <CardHeader className="p-0">
+                    {/* Thumbnail */}
+                    <div className="relative h-48 bg-gradient-to-br from-primary/20 to-primary/5 rounded-t-lg overflow-hidden">
+                      {template.thumbnail_url ? (
+                        <>
+                          {template.thumbnail_url.includes(".mp4") ||
+                          template.thumbnail_url.includes("video") ? (
+                            <video
+                              src={template.thumbnail_url}
+                              className="w-full h-full object-cover"
+                              preload="metadata"
+                              muted
+                              playsInline
+                            />
+                          ) : (
+                            <img
+                              src={template.thumbnail_url}
+                              alt={template.title}
+                              className="w-full h-full object-cover"
+                            />
+                          )}
+                          <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Play className="w-12 h-12 text-white drop-shadow-lg" />
+                          </div>
+                        </>
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Play className="w-12 h-12 text-primary/50 group-hover:text-primary/80 transition-colors" />
                         </div>
-                      </>
-                    ) : (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <Play className="w-12 h-12 text-primary/50 group-hover:text-primary/80 transition-colors" />
+                      )}
+                      <div className="absolute top-3 right-3">
+                        <Badge
+                          variant="secondary"
+                          className="bg-background/80 backdrop-blur-sm"
+                        >
+                          {template.duration_seconds}s
+                        </Badge>
                       </div>
-                    )}
-                    <div className="absolute top-3 right-3">
-                      <Badge
-                        variant="secondary"
-                        className="bg-background/80 backdrop-blur-sm"
-                      >
-                        {template.duration_seconds}s
-                      </Badge>
+                      <div className="absolute top-3 left-3">
+                        <Badge
+                          variant="secondary"
+                          className="bg-background/80 backdrop-blur-sm flex items-center gap-1"
+                        >
+                          {getCategoryIcon(template.video_type)}
+                          {template.video_type}
+                        </Badge>
+                      </div>
                     </div>
-                    <div className="absolute top-3 left-3">
-                      <Badge
-                        variant="secondary"
-                        className="bg-background/80 backdrop-blur-sm flex items-center gap-1"
-                      >
-                        {getCategoryIcon(template.video_type)}
-                        {template.video_type}
-                      </Badge>
+                  </CardHeader>
+                  <CardContent className="p-4 space-y-3">
+                    <div>
+                      <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
+                        {template.title}
+                      </h3>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {template.description}
+                      </p>
                     </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-4 space-y-3">
-                  <div>
-                    <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
-                      {template.title}
-                    </h3>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {template.description}
-                    </p>
-                  </div>
 
-                  {/* Action Buttons */}
-                  <div className="space-y-2 pt-2">
-                    <Button
-                      onClick={() => handleViewTemplateVideos(template)}
-                      variant="outline"
-                      className="w-full border-border hover:border-primary"
-                    >
-                      <Video className="w-4 h-4 mr-2" />
-                      See Generated Videos
-                    </Button>
-                    <div className="flex gap-2">
+                    {/* Action Buttons */}
+                    <div className="space-y-2 pt-2">
                       <Button
-                        onClick={() => handleRecreate(template)}
-                        className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
-                      >
-                        <Sparkles className="w-4 h-4 mr-2" />
-                        Recreate
-                      </Button>
-                      <Button
-                        onClick={() =>
-                          handleViewOriginal(template.original_video_url)
-                        }
+                        onClick={() => handleViewTemplateVideos(template)}
                         variant="outline"
-                        size="icon"
-                        className="border-border hover:border-primary"
-                        title="View Original"
+                        className="w-full border-border hover:border-primary"
                       >
-                        <ExternalLink className="w-4 h-4" />
+                        <Video className="w-4 h-4 mr-2" />
+                        See Generated Videos
                       </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => handleRecreate(template)}
+                          className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
+                        >
+                          <Sparkles className="w-4 h-4 mr-2" />
+                          Recreate
+                        </Button>
+                        <Button
+                          onClick={() =>
+                            handleViewOriginal(template.original_video_url)
+                          }
+                          variant="outline"
+                          size="icon"
+                          className="border-border hover:border-primary"
+                          title="View Original"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
 
           {/* Empty State */}
           {filteredTemplates.length === 0 && (
             <Card className="bg-card border-border">
               <CardContent className="p-12 text-center">
-                <Video className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-foreground mb-2">
-                  No templates found
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Try adjusting your filters
-                </p>
+                {activeTab === "public" ? (
+                  <>
+                    <Video className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-foreground mb-2">
+                      No public templates found
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Try adjusting your filters or check back later
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <Heart className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-foreground mb-2">
+                      No custom templates yet
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Save templates from the Public tab to build your custom
+                      collection
+                    </p>
+                    <Button
+                      onClick={() => setActiveTab("public")}
+                      variant="outline"
+                      className="border-border hover:border-primary"
+                    >
+                      <BookOpen className="w-4 h-4 mr-2" />
+                      Browse Public Templates
+                    </Button>
+                  </>
+                )}
               </CardContent>
             </Card>
           )}
