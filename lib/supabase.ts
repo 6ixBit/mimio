@@ -252,6 +252,16 @@ export const templatesApi = {
   }) => {
     return await supabase.from("ad_templates").insert([data]).select().single();
   },
+
+  // Delete a template (only for user-created templates)
+  delete: async (templateId: string, userId: string) => {
+    return await supabase
+      .from("ad_templates")
+      .delete()
+      .eq("id", templateId)
+      .eq("created_by", userId) // Ensure only the creator can delete
+      .eq("is_public", false); // Only allow deletion of custom templates
+  },
 };
 
 /**

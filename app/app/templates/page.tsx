@@ -26,6 +26,12 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Sparkles,
   Video,
   Search,
@@ -39,9 +45,12 @@ import {
   Loader2,
   Heart,
   BookOpen,
+  MoreVertical,
+  Trash2,
 } from "lucide-react";
 import { templatesApi, videosApi } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
+import { ConfirmationModal } from "@/components/confirmation-modal";
 
 interface VideoTemplate {
   id: string;
@@ -55,6 +64,8 @@ interface VideoTemplate {
   size: string;
   original_video_url: string;
   is_active: boolean;
+  created_by?: string;
+  is_public?: boolean;
 }
 
 interface GeneratedVideo {
@@ -111,6 +122,10 @@ export default function TemplatesPage() {
     size: "720x1280",
     duration_seconds: "8",
   });
+
+  // Template deletion
+  const [templateToDelete, setTemplateToDelete] =
+    useState<VideoTemplate | null>(null);
 
   // Fetch templates on mount
   useEffect(() => {
@@ -194,6 +209,33 @@ export default function TemplatesPage() {
       template_id: template.id, // Pass template ID to link the created video
     });
     router.push(`/app/create-video?${params.toString()}`);
+  };
+
+  const handleDeleteTemplate = (template: VideoTemplate) => {
+    setTemplateToDelete(template);
+  };
+
+  const confirmDeleteTemplate = async () => {
+    if (!templateToDelete || !user) return;
+
+    try {
+      const { error } = await templatesApi.delete(templateToDelete.id, user.id);
+
+      if (error) {
+        throw error;
+      }
+
+      // Remove from local state
+      setCustomTemplates((prev) =>
+        prev.filter((t) => t.id !== templateToDelete.id)
+      );
+
+      toast.success("Template deleted successfully");
+      setTemplateToDelete(null);
+    } catch (error) {
+      console.error("Error deleting template:", error);
+      toast.error("Failed to delete template");
+    }
   };
 
   const handleViewOriginal = (url: string) => {
@@ -667,6 +709,30 @@ export default function TemplatesPage() {
                         >
                           <ExternalLink className="w-4 h-4" />
                         </Button>
+                        {/* Options dropdown - only for custom templates */}
+                        {activeTab === "custom" &&
+                          template.created_by === user?.id && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="border-border hover:border-primary"
+                                >
+                                  <MoreVertical className="w-4 h-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={() => handleDeleteTemplate(template)}
+                                  className="cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50"
+                                >
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Delete Template
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
                       </div>
                     </div>
                   </CardContent>
@@ -795,6 +861,18 @@ export default function TemplatesPage() {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        open={!!templateToDelete}
+        onOpenChange={(open) => !open && setTemplateToDelete(null)}
+        title="Delete Template"
+        description={`Are you sure you want to delete "${templateToDelete?.title}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={confirmDeleteTemplate}
+        variant="destructive"
+      />
     </div>
   );
 }
