@@ -22,10 +22,12 @@ import {
   ImageIcon,
   Video,
   Loader2,
+  Wand2,
 } from "lucide-react";
 import { VideoApiClient } from "@/lib/video-api-client";
 import { videosApi } from "@/lib/supabase";
 import type { TrackedVideo } from "@/lib/video-api-types";
+import { PromptAdapterModal } from "@/components/prompt-adapter-modal";
 
 interface VariationsFormProps {
   user: any;
@@ -55,6 +57,9 @@ export function VariationsForm({
   const [selectedProject, setSelectedProject] = useState("");
   const [imageReference, setImageReference] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Prompt adapter modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Dropzone
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -204,9 +209,22 @@ export function VariationsForm({
 
           {/* Prompt */}
           <div className="space-y-2">
-            <Label htmlFor="prompt">
-              Prompt <span className="text-red-500">*</span>
-            </Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="prompt">
+                Prompt <span className="text-red-500">*</span>
+              </Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsModalOpen(true)}
+                disabled={isSubmitting}
+                className="flex items-center gap-1.5"
+              >
+                <Wand2 className="w-3.5 h-3.5" />
+                {prompt.trim() ? "Adapt Prompt" : "Generate Prompt"}
+              </Button>
+            </div>
             <Textarea
               id="prompt"
               placeholder="Describe the video you want to create variations of..."
@@ -219,7 +237,7 @@ export function VariationsForm({
             />
             <p className="text-xs text-muted-foreground">
               Each variation will use this same prompt but generate unique
-              results
+              results. Use the "Adapt/Generate" button for AI assistance.
             </p>
           </div>
 
@@ -402,6 +420,14 @@ export function VariationsForm({
           </Button>
         </form>
       </CardContent>
+
+      {/* Prompt Adapter Modal */}
+      <PromptAdapterModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        basePrompt={prompt}
+        onPromptGenerated={(newPrompt) => setPrompt(newPrompt)}
+      />
     </Card>
   );
 }

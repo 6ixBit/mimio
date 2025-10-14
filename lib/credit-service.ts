@@ -343,3 +343,4 @@ export async function getCreditUsageSummary(userId: string): Promise<{
     usage_percentage: Math.round(usagePercentage),
   };
 }
+

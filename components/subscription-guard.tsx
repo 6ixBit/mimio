@@ -96,3 +96,4 @@ export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
   // User has active subscription, show the app
   return <>{children}</>;
 }
+

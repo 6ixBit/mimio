@@ -14,10 +14,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Video, Upload, FolderOpen, X, ImageIcon, Loader2 } from "lucide-react";
+import {
+  Video,
+  Upload,
+  FolderOpen,
+  X,
+  ImageIcon,
+  Loader2,
+  Wand2,
+} from "lucide-react";
 import { VideoApiClient } from "@/lib/video-api-client";
 import { videosApi } from "@/lib/supabase";
 import type { TrackedVideo } from "@/lib/video-api-types";
+import { PromptAdapterModal } from "@/components/prompt-adapter-modal";
 
 interface SingleVideoFormProps {
   user: any;
@@ -47,6 +56,9 @@ export function SingleVideoForm({
   const [selectedProject, setSelectedProject] = useState("");
   const [imageReference, setImageReference] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Prompt adapter modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Dropzone for image reference
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -190,9 +202,22 @@ export function SingleVideoForm({
 
           {/* Prompt */}
           <div className="space-y-2">
-            <Label htmlFor="prompt">
-              Prompt <span className="text-red-500">*</span>
-            </Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="prompt">
+                Prompt <span className="text-red-500">*</span>
+              </Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsModalOpen(true)}
+                disabled={isSubmitting}
+                className="flex items-center gap-1.5"
+              >
+                <Wand2 className="w-3.5 h-3.5" />
+                {prompt.trim() ? "Adapt Prompt" : "Generate Prompt"}
+              </Button>
+            </div>
             <Textarea
               id="prompt"
               placeholder="Describe the video you want to create..."
@@ -204,7 +229,8 @@ export function SingleVideoForm({
               style={{ height: "400px" }}
             />
             <p className="text-xs text-muted-foreground">
-              Be specific and descriptive for best results
+              Be specific and descriptive for best results. Use the
+              "Adapt/Generate" button for AI assistance.
             </p>
           </div>
 
@@ -380,6 +406,14 @@ export function SingleVideoForm({
           </Button>
         </form>
       </CardContent>
+
+      {/* Prompt Adapter Modal */}
+      <PromptAdapterModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        basePrompt={prompt}
+        onPromptGenerated={(newPrompt) => setPrompt(newPrompt)}
+      />
     </Card>
   );
 }

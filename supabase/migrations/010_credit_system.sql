@@ -120,3 +120,4 @@ COMMENT ON COLUMN credit_transactions.amount IS 'Positive for additions, negativ
 COMMENT ON COLUMN credit_transactions.balance_after IS 'User credit balance after this transaction';
 COMMENT ON FUNCTION calculate_credit_cost IS 'Calculate credit cost: 1 credit per second for Sora-2 720p';
 
+

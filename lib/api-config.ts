@@ -25,6 +25,9 @@ export const API_ENDPOINTS = {
   // Video Analysis
   ANALYZE_VIDEO: "/api/analyze-video",
 
+  // Prompts
+  ADAPT_PROMPT: "/api/prompts/adapt",
+
   // System
   ROOT: "/",
   HEALTH: "/health",
