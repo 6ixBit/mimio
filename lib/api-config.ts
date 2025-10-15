@@ -8,7 +8,7 @@ export type Environment = "local" | "production";
 // API Base URLs
 const API_BASE_URLS = {
   local: "http://localhost:8006",
-  production: "https://your-production-url.com", // Update with actual production URL
+  production: "http://178.156.196.82:8000", // Your production server
 } as const;
 
 // API Endpoints
