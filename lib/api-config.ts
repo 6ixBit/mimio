@@ -8,7 +8,7 @@ export type Environment = "local" | "production";
 // API Base URLs
 const API_BASE_URLS = {
   local: "http://localhost:8006",
-  production: "http://178.156.196.82:8000", // Your production server
+  production: "https://api.mimio.app", // Your production API with SSL
 } as const;
 
 // API Endpoints
